@@ -1,0 +1,52 @@
+{
+  "CHANGE_BASE_CWD": "C:\\Users\\plc2\\Desktop\\Orca",
+  "BASE_DIR": "SegodEDI",
+  "SYSTEM_NAME": "segodedi",
+  "TFS_BASE_DIR": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe\"",
+  "GET_TFS_DEFAULT": "get {} /force  /recursive",
+  "VERSAO": "090000020",
+  "FIGURAS_PATH": "\\\\fileserver.scl.corp\\BibAppl\\Figuras",
+  "ICO_PATH": "",
+  "GET_HELP_FILE": "S",
+  "DELETE_TEMP_FILES": "S",
+  "COMPLEMENTOS_PATH": "",
+  "MAX_THREADS":"5",
+  "PBORCA": {
+    "BAT_3STEP": "3Step_{}.bat",
+    "BAT_BUILD_EXE": "build_exe_{}.bat",
+    "ORCA_EXE": "C:\\Program Files (x86)\\Appeon\\shared\\PowerBuilder\\orcascr170.exe",
+    "ORCA_3STEP_DAT": "3Step_{}.dat",
+    "ORCA_EXE_DAT": "build_exe_{}.dat",
+    "BASE_3STEP_SCRIPT": {
+      "SESSION": "start session",
+      "SET_DEBUG": "set debug true  ",
+      "LOG_FILE": "scc set connect property logfile {}",
+      "PROJ_PATH": "scc set connect property localprojpath {}",
+      "SCC_CONNECT": "scc connect offline",
+      "SET_TARGET": "scc set target {} \"Refresh_all importonly\"",
+      "EXCLUDE_PBD": "scc exclude liblist {}",
+      "REFRESH_TYPE": "scc refresh target 3pass",
+      "SCC_CLOSE": "scc close",
+      "END_SESSION": "end session"
+    },
+    "BASE_EXE_SCRIPT": {
+      "SESSION": "start session",
+      "SET_LIB_LIST": "set liblist {}",
+      "SET_APPLICATION": "set application {}",
+      "BUILD_APPLICATION": ";build application 3pass",
+
+      "FILE_VERSION_NUM": "set exeinfo property fileversionnum {}",
+      "FILE_VERSION": "set exeinfo property fileversion {}",
+      "COMPANY_NAME": "set exeinfo property companyname {}",
+      "DESCRIPTION": "set exeinfo property description {}",
+      "COPYRIGHT": "set exeinfo property copyright {}",
+      "PRODUCT_NAME": "set exeinfo property productname {}",
+      "PRODUCT_VERSION_NUM": "set exeinfo property productversionnum {}",
+      "PRODUCT_VERSION": "set exeinfo property productversion {}",
+
+      "BUILD_LIBRARY": "{}",
+      "BUILD_EXE": "build executable {}",
+      "END_SESSION": "end session"
+    }
+  }
+}
