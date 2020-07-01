@@ -90,7 +90,7 @@ def return_log_object(log_filename, log_name, when='MIDNIGHT', level=logging.INF
 
 
 def return_obj_path(base_path, filter) -> str:
-    srj_list= []
+    srj_list = []
     obj_path = f'{base_path}\\{filter}'
     for file in glob.glob(obj_path):
         srj_list.append(file)
@@ -135,12 +135,11 @@ def write_new_line(file: TextIOWrapper, text: str, qtd=1) -> str:
 
 
 def delete_files_filter(base_path):
-
     path = f'{base_path}\\**\\*.'
     path_full = f'{base_path}\\**\\*.*'
-    files = set(glob.glob(path_full, recursive=True)) - set(glob.glob(path+'pb*', recursive=True) +
-                                                         glob.glob(path + 'sra', recursive=True)
-                                                         )
+    files = set(glob.glob(path_full, recursive=True)) - set(glob.glob(path + 'pb*', recursive=True) +
+                                                            glob.glob(path + 'sra', recursive=True)
+                                                            )
 
     for f in files:
         try:

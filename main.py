@@ -3,6 +3,7 @@ import glob
 import multiprocessing as mp
 import os
 import time
+import subprocess
 from io import TextIOWrapper
 
 import obj_worker
@@ -137,10 +138,23 @@ def create_pbw(pbw_path: str):
 
 
 def run_bat(bat_path: str):
-    import subprocess
-    for _ in range(2):
-        output = subprocess.run([bat_path], stdout=subprocess.PIPE)
-        output.check_returncode()
+    i = 1
+    max_loop = 2
+    while i <= max_loop:
+        util.print_and_log(logger.info, '\tRunning {} of {} bat executions'.format(i, max_loop))
+        cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            check=True)
+        i = i + 1
+        if 'Result Code -27' in cp.stdout:
+            raise EnvironmentError('Target file not found:')
+        if 'Result Code -6' in cp.stdout:
+            raise EnvironmentError('Target file not found in path: set application')
+        if 'Last Command Failed.' in cp.stdout:
+            raise EnvironmentError('Error building exe')
+        if 'End Session' in cp.stdout:
+            return  # sucess
+
+    raise EnvironmentError(f'Error running 3step bat: i = {i}')
 
 
 def change_sra_version():
@@ -188,29 +202,10 @@ def change_pbr_relative_path():
     util.set_read_only(file_path)
 
 
-def main():
-    start = time.time()
-    config = util.get_config()
-    set_globals(config)
-    util.change_cwd(BASE_PATH)
-
-    try:
-        log_path = f'{BASE_SISTEMAS_PATH}\\{SYSTEM_NAME}_LOG'
-        os.makedirs(log_path)
-    except Exception as ex:
-        print(ex)
-    finally:
-        log_path = '{}\\GERAL.log'.format(log_path)
-
-    try:
-        global logger
-        logger = util.return_log_object(log_filename=log_path,
-                                        log_name='LOG_GERAL', when=None)
-    except Exception as err:
-        print(err)
-
+def get_project() -> dict:
     logger.info('Process starded....')
     print('####################')
+
     try:
         util.print_and_log(logger.info, '##### GET PBT ######')
         pbt_content = get_pbt(PBT_PATH)
@@ -243,11 +238,6 @@ def main():
         change_pbr_relative_path()
         util.print_and_log(logger.info, 'Done changing PBR BASE PATH')
 
-        util.print_and_log(logger.info, '##### CREATE ORCA SCRIPTS ######')
-        orca_helper = orca_util.OrcaUtil(config, pbg_dict['PBD'], logger)
-        orca_helper.create_pborca_scripts()
-        util.print_and_log(logger.info, 'Done create orca scripts...')
-
         util.print_and_log(logger.info, '##### GET HELP FILE ######')
         # TODO: Get help..file
         util.print_and_log(logger.info, 'Done get help file...')
@@ -256,22 +246,86 @@ def main():
         # TODO: Get complementos
         util.print_and_log(logger.info, 'Done get complementos...')
 
-        # util.print_and_log(logger.info, '##### DELETE TEMP FILES ######')
-        # TODO: Precisa rodar o 3 step antes de deletar os arquivos
-        # if config['DELETE_TEMP_FILES'].upper() == 'S':
-        #     util.delete_files_filter(BASE_SISTEMAS_PATH)
-        #     util.print_and_log(logger.info, 'Done delete temp files...')
-        # else:
-        #     util.print_and_log(logger.info, 'Delete flag off...')
+        return pbg_dict
 
-        minutes = (time.time() - start) / 60
-        util.print_and_log(logger.info, 'Complete process took {} minutes'.format(minutes))
     except FileNotFoundError as ex:
         util.print_and_log(logger.error, ex)
         return
     except EnvironmentError as ex:
         util.print_and_log(logger.error, ex)
         return
+
+
+def create_logger():
+    try:
+        log_path = f'{BASE_SISTEMAS_PATH}\\{SYSTEM_NAME}_LOG'
+        os.makedirs(log_path)
+    except Exception as ex:
+        print(ex)
+    finally:
+        log_path = '{}\\GERAL.log'.format(log_path)
+
+    try:
+        global logger
+        logger = util.return_log_object(log_filename=log_path,
+                                        log_name='LOG_GERAL', when=None)
+    except Exception as err:
+        raise err
+
+
+def delete_temp_files(config):
+    util.print_and_log(logger.info, '##### DELETE TEMP FILES ######')
+    if config['DELETE_TEMP_FILES'].upper() == 'S':
+        util.delete_files_filter(BASE_SISTEMAS_PATH)
+        util.print_and_log(logger.info, 'Done delete temp files...')
+    else:
+        util.print_and_log(logger.info, 'Delete flag off...')
+
+
+def create_scripts(pbg_dict, config) -> str:
+    util.print_and_log(logger.info, '##### CREATE ORCA SCRIPTS ######')
+    orca_helper = orca_util.OrcaUtil(config, pbg_dict['PBD'], logger)
+    orca_helper.create_pborca_scripts()
+    util.print_and_log(logger.info, 'Done create orca scripts...')
+
+    step_path = [orca_helper.BAT_PATH, orca_helper.BAT_EXE]
+    return step_path
+
+
+def prepare_run_bat(step_path, config):
+    util.print_and_log(logger.info, '##### RUN 3 STEP BAT ######')
+    run_bat(step_path[0])
+    util.print_and_log(logger.info, 'Done running 3step bat')
+
+    if config['CREATE_EXE'].upper() == 'S':
+        util.print_and_log(logger.info, '##### RUN EXE BAT ######')
+        run_bat(step_path[1])
+        util.print_and_log(logger.info, 'Done running exe bat')
+
+
+def main():
+    start = time.time()
+
+    config = util.get_config()
+    set_globals(config)
+    util.change_cwd(BASE_PATH)
+
+    try:
+        create_logger()
+    except Exception as err:
+        print(err)
+        return
+
+    pbg_dict = get_project()
+
+    step_path = create_scripts(pbg_dict, config)
+
+    prepare_run_bat(step_path, config)
+
+    delete_temp_files(config)
+
+    minutes = (time.time() - start) / 60
+    util.print_and_log(logger.info, 'Complete process took {} minutes'.format(minutes))
 
 
 if __name__ == '__main__':

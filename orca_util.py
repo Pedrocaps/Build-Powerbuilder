@@ -14,6 +14,12 @@ class OrcaUtil:
         self.PBD_LIST = pbd_list
         self.LOGGER = logger
 
+        bat_3step = self.CONFIG_ORCA['BAT_3STEP'].format(self.SYSTEM_NAME)
+        self.BAT_PATH = f"{self.BASE_SISTEMAS_PATH}\\{bat_3step}"
+
+        bat_exe = self.CONFIG_ORCA['BAT_BUILD_EXE'].format(self.SYSTEM_NAME)
+        self.BAT_EXE = f"{self.BASE_SISTEMAS_PATH}\\{bat_exe}"
+
     def create_pborca_scripts(self):
         print_and_log(self.LOGGER.info, '\tCREATE 3STEP SCRIPT')
         self.create_3step_script()
@@ -36,11 +42,8 @@ class OrcaUtil:
         orca_3step_base_scrpt = self.CONFIG_ORCA['BASE_3STEP_SCRIPT']
         orca_script_lines = dict(orca_3step_base_scrpt)
 
-        bat_3step = self.CONFIG_ORCA['BAT_3STEP'].format(self.SYSTEM_NAME)
-        bat_path = f"{self.BASE_SISTEMAS_PATH}\\{bat_3step}"
-
         self.write_pborca_script_3step(orca_3_step_file, orca_script_lines, self.PBD_LIST)
-        self.write_bat(cmd_bat, bat_path)
+        self.write_bat(cmd_bat, self.BAT_PATH)
 
     def create_pborca_exe_script(self):
         orca_exe_path = self.CONFIG_ORCA['ORCA_EXE']
@@ -51,10 +54,8 @@ class OrcaUtil:
         cmd_bat = f'echo %time%\n' \
                   f'{orca_exe} {orca_exe_file}\n' \
                   f'echo %time%'
-        bat_3step = self.CONFIG_ORCA['BAT_BUILD_EXE'].format(self.SYSTEM_NAME)
-        bat_path = f"{self.BASE_SISTEMAS_PATH}\\{bat_3step}"
 
-        self.write_bat(cmd_bat, bat_path)
+        self.write_bat(cmd_bat, self.BAT_EXE)
 
         orca_exe_base_scrpt = self.CONFIG_ORCA['BASE_EXE_SCRIPT']
         orca_script_lines = dict(orca_exe_base_scrpt)
@@ -91,7 +92,7 @@ class OrcaUtil:
                     lib_list = ';'.join([pbl for pbl in pbd_dict])
                     v = v.format(f'"{lib_list}"')
                 elif k == 'SET_APPLICATION':
-                    sra_path = f'{self.BASE_PATH}\\{self.SYSTEM_NAME}.pbl'
+                    sra_path = f'{self.SYSTEM_DIR}\\{self.SYSTEM_NAME}.pbl'
                     sra_path = f'"{sra_path}" "{self.SYSTEM_NAME}"'
                     v = v.format(sra_path)
                 elif k == 'FILE_VERSION_NUM':
@@ -133,4 +134,3 @@ class OrcaUtil:
     def write_bat(self, cmd: str, bat_name):
         with open(bat_name, 'w+') as f:
             write_new_line(file=f, text=cmd)
-            f.write('pause')
