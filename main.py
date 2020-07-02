@@ -137,7 +137,7 @@ def create_pbw(pbw_path: str):
         f.write('DefaultRemoteTarget "{}.pbt";\n'.format(SYSTEM_NAME))
 
 
-def run_bat(bat_path: str):
+def run_bat(bat_path: str, log_path: str):
     i = 1
     max_loop = 2
     while i <= max_loop:
@@ -145,6 +145,13 @@ def run_bat(bat_path: str):
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True)
         i = i + 1
+        if 'Result Code -22.' in cp.stdout:
+            try:
+                errors_txt = util.get_error_from_orca_log(log_path)
+                raise SyntaxError(f'Syntax Errors: {errors_txt}')
+            except Exception as err:
+                raise EnvironmentError('Reading log error: {}'.format(err))
+            pass
         if 'Result Code -27' in cp.stdout:
             raise EnvironmentError('Target file not found:')
         if 'Result Code -6' in cp.stdout:
@@ -249,11 +256,9 @@ def get_project() -> dict:
         return pbg_dict
 
     except FileNotFoundError as ex:
-        util.print_and_log(logger.error, ex)
-        return
+        raise ex
     except EnvironmentError as ex:
-        util.print_and_log(logger.error, ex)
-        return
+        raise ex
 
 
 def create_logger():
@@ -282,24 +287,47 @@ def delete_temp_files(config):
         util.print_and_log(logger.info, 'Delete flag off...')
 
 
-def create_scripts(pbg_dict, config) -> str:
+def create_scripts(pbg_dict, config) -> dict:
+    orca_dict = {}
     util.print_and_log(logger.info, '##### CREATE ORCA SCRIPTS ######')
     orca_helper = orca_util.OrcaUtil(config, pbg_dict['PBD'], logger)
     orca_helper.create_pborca_scripts()
     util.print_and_log(logger.info, 'Done create orca scripts...')
 
-    step_path = [orca_helper.BAT_PATH, orca_helper.BAT_EXE]
-    return step_path
+    orca_dict['BAT_PATH'] = orca_helper.BAT_PATH
+    orca_dict['BAT_EXE'] = orca_helper.BAT_EXE
+    orca_dict['ORCA_LOG'] = orca_helper.ORCA_LOG_PATH
+
+    return orca_dict
 
 
-def prepare_run_bat(step_path, config):
-    util.print_and_log(logger.info, '##### RUN 3 STEP BAT ######')
-    run_bat(step_path[0])
+def prepare_run_bat(orca_dict, config):
+    try:
+        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'])
+    except EnvironmentError as err:
+        err_txt = '\tError executing 3 step bat, open pbw and correct errors - \n{}'.format(err)
+        util.print_and_log(logger.info, err_txt)
+        raise EnvironmentError(err_txt)
+    except SyntaxError as err:
+        err_txt = '\tError executing 3 step bat, correct errors - {}'.format(err)
+        util.print_and_log(logger.info, err_txt)
+        raise EnvironmentError(err_txt)
+
     util.print_and_log(logger.info, 'Done running 3step bat')
 
     if config['CREATE_EXE'].upper() == 'S':
         util.print_and_log(logger.info, '##### RUN EXE BAT ######')
-        run_bat(step_path[1])
+        try:
+            run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_LOG'])
+        except EnvironmentError as err:
+            err_txt = '\tError executing EXE bat, open pbw and correct errors - {}'.format(err)
+            util.print_and_log(logger.info, err_txt)
+            raise EnvironmentError(err_txt)
+        except SyntaxError as err:
+            err_txt = '\tError executing EXE bat, correct errors - {}'.format(err)
+            util.print_and_log(logger.info, err_txt)
+            raise EnvironmentError(err_txt)
+
         util.print_and_log(logger.info, 'Done running exe bat')
 
 
@@ -316,11 +344,21 @@ def main():
         print(err)
         return
 
-    pbg_dict = get_project()
+    try:
+        pbg_dict = get_project()
+    except FileNotFoundError as ex:
+        util.print_and_log(logger.error, ex)
+        return
+    except EnvironmentError as ex:
+        util.print_and_log(logger.error, ex)
+        return
 
-    step_path = create_scripts(pbg_dict, config)
+    orca_dict = create_scripts(pbg_dict, config)
 
-    prepare_run_bat(step_path, config)
+    try:
+        prepare_run_bat(orca_dict, config)
+    except (EnvironmentError, SyntaxError) as err:
+        return
 
     delete_temp_files(config)
 

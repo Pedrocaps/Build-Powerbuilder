@@ -20,6 +20,10 @@ class OrcaUtil:
         bat_exe = self.CONFIG_ORCA['BAT_BUILD_EXE'].format(self.SYSTEM_NAME)
         self.BAT_EXE = f"{self.BASE_SISTEMAS_PATH}\\{bat_exe}"
 
+        orca_log_path = f'{self.BASE_SISTEMAS_PATH}\\{self.SYSTEM_NAME}_LOG'
+        self.ORCA_LOG_PATH = '{}\\3step.log'.format(orca_log_path)
+
+
     def create_pborca_scripts(self):
         print_and_log(self.LOGGER.info, '\tCREATE 3STEP SCRIPT')
         self.create_3step_script()
@@ -68,8 +72,7 @@ class OrcaUtil:
         with open(orca_file, 'w+') as f:
             for k, v in orca_script_lines.items():
                 if k == 'LOG_FILE':
-                    log_path = f'{self.BASE_SISTEMAS_PATH}\\{self.SYSTEM_NAME}_LOG'
-                    v = v.format('\"{}\\3step.log\"'.format(log_path))
+                    v = v.format('\"{}\"'.format(self.ORCA_LOG_PATH))
                 elif k == 'PROJ_PATH':
                     v = v.format(f'\"{self.SYSTEM_DIR}\"')
                 elif k == 'SET_TARGET':

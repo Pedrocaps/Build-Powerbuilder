@@ -20,9 +20,35 @@ def get_config() -> dict:
     return data
 
 
-def read_file(path: str) -> TextIOWrapper:
-    file = open(path, 'r')
+def read_file(base_path: str, encoding='') -> TextIOWrapper:
+    if encoding:
+        file = open(base_path, 'r', encoding=encoding)
+    else:
+        file = open(base_path, 'r')
     return file
+
+
+def get_error_from_orca_log(log_path) -> str:
+    try:
+        content = read_file(log_path, 'utf-16')
+        lines = content.readlines()
+    except Exception as err:
+        raise err
+
+    errors_txt = ''
+    is_error_lines = False
+
+    for line in lines:
+        strip_line = line.strip()
+        if strip_line == 'PBORCA_SccRefreshTarget.':
+            is_error_lines = True
+            continue
+        if line.strip() == 'PBORCA_SccClose':
+            is_error_lines = False
+        if is_error_lines:
+            errors_txt = errors_txt + line
+
+    return errors_txt
 
 
 def run_cmd_default(cmd: str):
@@ -45,15 +71,15 @@ def change_cwd(cwd: str):
     os.chdir(cwd)
 
 
-def path_obj_from_line(path: str) -> str:
-    return path.replace('\\\\', '\\').replace('"', '').replace('pbl', 'pbg')
+def path_obj_from_line(base_path: str) -> str:
+    return base_path.replace('\\\\', '\\').replace('"', '').replace('pbl', 'pbg')
 
 
-def chunks(l, n):
+def chunks(length, n):
     # For item i in a range that is a length of l,
-    for i in range(0, len(l), n):
+    for i in range(0, len(length), n):
         # Create an index range for l of n items:
-        yield l[i:i + n]
+        yield length[i:i + n]
 
 
 def print_and_log(logger_level, line):
@@ -89,9 +115,9 @@ def return_log_object(log_filename, log_name, when='MIDNIGHT', level=logging.INF
     return my_logger
 
 
-def return_obj_path(base_path, filter) -> str:
+def return_obj_path(base_path, base_filter) -> str:
     srj_list = []
-    obj_path = f'{base_path}\\{filter}'
+    obj_path = f'{base_path}\\{base_filter}'
     for file in glob.glob(obj_path):
         srj_list.append(file)
 
@@ -135,10 +161,12 @@ def write_new_line(file: TextIOWrapper, text: str, qtd=1) -> str:
 
 
 def delete_files_filter(base_path):
-    path = f'{base_path}\\**\\*.'
+    base_path = f'{base_path}\\**\\*.'
     path_full = f'{base_path}\\**\\*.*'
-    files = set(glob.glob(path_full, recursive=True)) - set(glob.glob(path + 'pb*', recursive=True) +
-                                                            glob.glob(path + 'sra', recursive=True)
+    files = set(glob.glob(path_full, recursive=True)) - set(glob.glob(base_path + 'pb*', recursive=True) +
+                                                            glob.glob(base_path + 'sra', recursive=True) +
+                                                            glob.glob(base_path + 'exe', recursive=True) +
+                                                            glob.glob(base_path + 'log', recursive=True)
                                                             )
 
     for f in files:
