@@ -1,9 +1,13 @@
+import concurrent.futures
 import glob
 import json
 import logging
+import multiprocessing as mp
 import os
 from io import TextIOWrapper
 from os import path
+
+import obj_worker
 
 CMD_BASE = 'cmd /c {}'
 GET_TFS_DEFAULT = "get {} /force  /recursive"
@@ -160,18 +164,46 @@ def write_new_line(file: TextIOWrapper, text: str, qtd=1) -> str:
     return line
 
 
-def delete_files_filter(base_path):
-    base_path = f'{base_path}\\**\\*.'
+def prepare_delete_files_filter(base_path, max_threads):
     path_full = f'{base_path}\\**\\*.*'
-    files = set(glob.glob(path_full, recursive=True)) - set(glob.glob(base_path + 'pb*', recursive=True) +
-                                                            glob.glob(base_path + 'sra', recursive=True) +
-                                                            glob.glob(base_path + 'exe', recursive=True) +
-                                                            glob.glob(base_path + 'log', recursive=True)
-                                                            )
+    all_obj_list = list(set(glob.glob(path_full, recursive=True)) - set(glob.glob(path_full + 'pb*', recursive=True) +
+                                                                        glob.glob(path_full + 'sra', recursive=True) +
+                                                                        glob.glob(path_full + 'exe', recursive=True) +
+                                                                        glob.glob(path_full + 'log', recursive=True)
+                                                                        ))
 
-    for f in files:
-        try:
-            set_read_only(f)
-            os.remove(f)
-        except OSError as e:
-            print("Error: %s : %s" % (f, e.strerror))
+    obj_chunks = chunker_list(all_obj_list, max_threads)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        executor.map(obj_worker.delete_files_filter, obj_chunks)
+
+
+def chunker_list(seq, size):
+    return (seq[i::size] for i in range(size))
+
+
+def prepare_get_obj_from_pbg_process(pbgs: list):
+    # Chunks of a list
+    chunk_list = chunks(pbgs, 6)
+    for chunk in chunk_list:
+        process_list = []
+        for pbg in chunk:
+            p = mp.Process(target=obj_worker.obj_list_from_pbg, args=(pbg,))
+            process_list.append(p)
+            p.start()
+
+        for p in process_list:
+            p.join()
+
+
+def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
+    all_obj_list = []
+    for pbg in pbgs:
+        obj_list = obj_worker.obj_list_from_pbg(pbg)
+        if obj_list:
+            all_obj_list.extend(obj_list)
+
+    obj_chunks = chunker_list(all_obj_list, max_threads)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        executor.map(obj_worker.get_obj_from_list, obj_chunks)

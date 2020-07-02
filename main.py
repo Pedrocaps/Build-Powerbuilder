@@ -1,12 +1,9 @@
-import concurrent.futures
 import glob
-import multiprocessing as mp
 import os
-import time
 import subprocess
+import time
 from io import TextIOWrapper
 
-import obj_worker
 import orca_util
 import util
 
@@ -93,38 +90,6 @@ def set_globals(config: dict):
     FIGURAS_PATH = config['FIGURAS_PATH']
 
 
-def prepare_get_obj_from_pbg_process(pbgs: list):
-    # Chunks of a list
-    chunk_list = util.chunks(pbgs, 6)
-    for chunk in chunk_list:
-        process_list = []
-        for pbg in chunk:
-            p = mp.Process(target=obj_worker.obj_list_from_pbg, args=(pbg,))
-            process_list.append(p)
-            p.start()
-
-        for p in process_list:
-            p.join()
-
-
-def chunker_list(seq, size):
-    return (seq[i::size] for i in range(size))
-
-
-def prepare_get_obj_from_pbg_thread(pbgs: list):
-    max_threads = MAX_THREADS
-    all_obj_list = []
-    for pbg in pbgs:
-        obj_list = obj_worker.obj_list_from_pbg(pbg)
-        if obj_list:
-            all_obj_list.extend(obj_list)
-
-    obj_chunks = chunker_list(all_obj_list, max_threads)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-        executor.map(obj_worker.get_obj_from_list, obj_chunks)
-
-
 def create_pbw(pbw_path: str):
     with open(pbw_path, 'w+') as f:
         f.write("Save Format v3.0(19990112)\n")
@@ -142,6 +107,7 @@ def run_bat(bat_path: str, log_path: str):
     max_loop = 2
     while i <= max_loop:
         util.print_and_log(logger.info, '\tRunning {} of {} bat executions'.format(i, max_loop))
+        util.print_and_log(logger.info, '\t\t see {} for details '.format(log_path))
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True)
         i = i + 1
@@ -231,7 +197,7 @@ def get_project() -> dict:
         util.print_and_log(logger.info, 'Done getting pbr {}...'.format(pbr_path))
 
         util.print_and_log(logger.info, '##### GET OBJ ######')
-        prepare_get_obj_from_pbg_thread(pbg_list)
+        util.prepare_get_obj_from_pbg_thread(pbg_list, MAX_THREADS)
         util.print_and_log(logger.info, 'Done getting all objects...')
 
         util.print_and_log(logger.info, '##### CHANGE VGSVERSAO ######')
@@ -278,7 +244,7 @@ def create_logger():
 def delete_temp_files(config):
     util.print_and_log(logger.info, '##### DELETE TEMP FILES ######')
     if config['DELETE_TEMP_FILES'].upper() == 'S':
-        util.delete_files_filter(BASE_SISTEMAS_PATH)
+        util.prepare_delete_files_filter(BASE_SISTEMAS_PATH, MAX_THREADS)
         util.print_and_log(logger.info, 'Done delete temp files...')
     else:
         util.print_and_log(logger.info, 'Delete flag off...')

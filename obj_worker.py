@@ -1,5 +1,6 @@
 import util
 import uuid
+import os
 
 
 def obj_list_from_pbg(pbg):
@@ -79,3 +80,25 @@ def get_obj_from_list(obj_list: list):
         util.get_from_tfs(obj, tfs_base)
 
     logger.info(f'End getting objects...')
+
+
+def delete_files_filter(files_path_list):
+    config = util.get_config()
+
+    base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
+    system_name = config['SYSTEM_NAME']
+
+    log_path = f'{base_path}\\{system_name}_LOG'
+    thread_name = uuid.uuid1().hex
+    log_path = '{}\\delete_{}.log'.format(log_path, thread_name)
+    logger = util.return_log_object(log_filename=log_path, log_name=thread_name, when=None)
+
+    logger.info(f'Start deleting {len(files_path_list)} objects...')
+
+    for i, f in enumerate(files_path_list):
+        try:
+            logger.info(f'\tgetting {i + 1} of {len(files_path_list)} :{f} ...')
+            util.set_read_only(f)
+            os.remove(f)
+        except OSError as e:
+            logger.info("\t\tError: %s : %s" % (f, e.strerror))
