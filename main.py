@@ -210,9 +210,6 @@ def change_pbr_relative_path():
 
 
 def get_project() -> dict:
-    logger.info('Process starded....')
-    print('####################')
-
     try:
         util.print_and_log(logger.info, '##### GET PBT ######')
         pbt_content = get_pbt(PBT_PATH)
@@ -344,6 +341,16 @@ def main():
         print(err)
         return
 
+    logger.info('Process starded....')
+    print('####################')
+
+    start_process(config)
+
+    minutes = (time.time() - start) / 60
+    util.print_and_log(logger.info, 'Complete process took {} minutes'.format(minutes))
+
+
+def start_process(config):
     try:
         pbg_dict = get_project()
     except FileNotFoundError as ex:
@@ -361,9 +368,6 @@ def main():
         return
 
     delete_temp_files(config)
-
-    minutes = (time.time() - start) / 60
-    util.print_and_log(logger.info, 'Complete process took {} minutes'.format(minutes))
 
 
 if __name__ == '__main__':
