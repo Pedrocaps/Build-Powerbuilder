@@ -8,12 +8,10 @@ import orca_util
 import util
 
 
-def get_pbt(pbt_path) -> TextIOWrapper:
+def get_pbt(pbt_path):
     try:
         util.get_from_tfs(pbt_path, TFS_BASE_DIR)
-        content = util.read_file(pbt_path)
-
-        return content
+        _ = util.read_file(pbt_path)
     except FileNotFoundError:
         raise
 
@@ -35,7 +33,9 @@ def get_pbr() -> str:
         return pbr_list[0]
 
 
-def pbg_list_from_from_pbt(pbt_content: TextIOWrapper) -> dict:
+def pbg_list_from_from_pbt(pbt_path: str, use_tfs=True) -> dict:
+    pbt_content = util.read_file(pbt_path)
+
     lines = pbt_content.readlines()
 
     pbg_list = []
@@ -50,8 +50,9 @@ def pbg_list_from_from_pbt(pbt_content: TextIOWrapper) -> dict:
     util.change_cwd(SYSTEM_DIR.format(SYSTEM_NAME.upper()))
     for pbl in pbls:
         pbl_rep = util.path_obj_from_line(pbl)
-        logger.info(f'\tGetting PBG {pbl_rep}')
-        util.get_from_tfs(pbl_rep, TFS_BASE_DIR)
+        if use_tfs:
+            logger.info(f'\tGetting PBG {pbl_rep}')
+            util.get_from_tfs(pbl_rep, TFS_BASE_DIR)
 
         abs_path = os.path.abspath(pbl_rep)
 
@@ -177,44 +178,53 @@ def change_pbr_relative_path():
 
 def get_project() -> dict:
     try:
+        start = time.time()
         util.print_and_log(logger.info, '##### GET PBT ######')
-        pbt_content = get_pbt(PBT_PATH)
-        util.print_and_log(logger.info, 'Done getting {} ...'.format(PBT_PATH))
+        get_pbt(PBT_PATH)
+        util.print_and_log(logger.info, 'Done getting {} ... ({} min)'.format(PBT_PATH, (time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### CREATE PBW ######')
         pbw_path = SYSTEM_DIR.format(SYSTEM_NAME)
         pbw_path = "{}\\{}.pbw".format(pbw_path, SYSTEM_NAME)
         create_pbw(pbw_path)
-        util.print_and_log(logger.info, 'Done creating {} ...'.format(pbw_path))
+        util.print_and_log(logger.info, 'Done creating {} ... ({} min)'.format(pbw_path, (time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### GET PBG ######')
-        pbg_dict = pbg_list_from_from_pbt(pbt_content)
+        pbg_dict = pbg_list_from_from_pbt(PBT_PATH)
         pbg_list = pbg_dict['ALL']
-        util.print_and_log(logger.info, 'Done getting PBG(D)s...')
+        util.print_and_log(logger.info, 'Done getting PBG(D)s...'.format((time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### GET PBR ######')
         pbr_path = get_pbr()
-        util.print_and_log(logger.info, 'Done getting pbr {}...'.format(pbr_path))
+        util.print_and_log(logger.info, 'Done getting pbr {}... ({} min)'.format(pbr_path, (time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### GET OBJ ######')
         util.prepare_get_obj_from_pbg_thread(pbg_list, MAX_THREADS)
-        util.print_and_log(logger.info, 'Done getting all objects...')
+        util.print_and_log(logger.info, 'Done getting all objects... ({} min)'.format((time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### CHANGE VGSVERSAO ######')
         change_sra_version()
-        util.print_and_log(logger.info, 'Done changing vgsVersao')
+        util.print_and_log(logger.info, 'Done changing vgsVersao... ({} min)'.format((time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### CHANGE PBR BASE PATH ######')
         change_pbr_relative_path()
-        util.print_and_log(logger.info, 'Done changing PBR BASE PATH')
+        util.print_and_log(logger.info, 'Done changing PBR BASE PATH ({} min)'.format((time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### GET HELP FILE ######')
         # TODO: Get help..file
-        util.print_and_log(logger.info, 'Done get help file...')
+        util.print_and_log(logger.info, 'Done get help file... ({} min)'.format((time.time() - start) / 60))
 
+        start = time.time()
         util.print_and_log(logger.info, '##### GET COMPLEMENTOS ######')
         # TODO: Get complementos
-        util.print_and_log(logger.info, 'Done get complementos...')
+        util.print_and_log(logger.info, 'Done get complementos... ({} min)'.format((time.time() - start) / 60))
 
         return pbg_dict
 
@@ -242,20 +252,22 @@ def create_logger():
 
 
 def delete_temp_files(config):
+    start = time.time()
     util.print_and_log(logger.info, '##### DELETE TEMP FILES ######')
     if config['DELETE_TEMP_FILES'].upper() == 'S':
         util.prepare_delete_files_filter(BASE_SISTEMAS_PATH, MAX_THREADS)
-        util.print_and_log(logger.info, 'Done delete temp files...')
+        util.print_and_log(logger.info, 'Done delete temp files... ({} min)'.format((time.time() - start) / 60))
     else:
         util.print_and_log(logger.info, 'Delete flag off...')
 
 
 def create_scripts(pbg_dict, config) -> dict:
+    start = time.time()
     orca_dict = {}
     util.print_and_log(logger.info, '##### CREATE ORCA SCRIPTS ######')
     orca_helper = orca_util.OrcaUtil(config, pbg_dict['PBD'], logger)
     orca_helper.create_pborca_scripts()
-    util.print_and_log(logger.info, 'Done create orca scripts...')
+    util.print_and_log(logger.info, 'Done create orca scripts... ({} min)'.format((time.time() - start) / 60))
 
     orca_dict['BAT_PATH'] = orca_helper.BAT_PATH
     orca_dict['BAT_EXE'] = orca_helper.BAT_EXE
@@ -265,10 +277,11 @@ def create_scripts(pbg_dict, config) -> dict:
 
 
 def prepare_run_bat(orca_dict, config):
+    start = time.time()
     try:
         run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'])
     except EnvironmentError as err:
-        err_txt = '\tError executing 3 step bat, open pbw and correct errors - \n{}'.format(err)
+        err_txt = '\tError executing 3 step bat, open pbw and correct errors : \n\t\t{}'.format(err)
         util.print_and_log(logger.info, err_txt)
         raise EnvironmentError(err_txt)
     except SyntaxError as err:
@@ -276,9 +289,10 @@ def prepare_run_bat(orca_dict, config):
         util.print_and_log(logger.info, err_txt)
         raise EnvironmentError(err_txt)
 
-    util.print_and_log(logger.info, 'Done running 3step bat')
+    util.print_and_log(logger.info, 'Done running 3step bat... ({} min)'.format((time.time() - start) / 60))
 
     if config['CREATE_EXE'].upper() == 'S':
+        start = time.time()
         util.print_and_log(logger.info, '##### RUN EXE BAT ######')
         try:
             run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_LOG'])
@@ -291,7 +305,7 @@ def prepare_run_bat(orca_dict, config):
             util.print_and_log(logger.info, err_txt)
             raise EnvironmentError(err_txt)
 
-        util.print_and_log(logger.info, 'Done running exe bat')
+        util.print_and_log(logger.info, 'Done running exe bat... ({} min)'.format((time.time() - start) / 60))
 
 
 def main():

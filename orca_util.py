@@ -1,4 +1,4 @@
-from util import pbd_list_as_string, write_new_line, return_obj_path, return_pbd_from_srj, print_and_log
+from util import pbd_list_as_string, write_new_line, return_obj_path, return_properties_from_srj, print_and_log
 
 
 class OrcaUtil:
@@ -13,6 +13,7 @@ class OrcaUtil:
         self.VERSAO = config['VERSAO']
         self.PBD_LIST = pbd_list
         self.LOGGER = logger
+        self.SYSTEM_DESC = config['SYSTEM_DESC']
 
         bat_3step = self.CONFIG_ORCA['BAT_3STEP'].format(self.SYSTEM_NAME)
         self.BAT_PATH = f"{self.BASE_SISTEMAS_PATH}\\{bat_3step}"
@@ -22,7 +23,6 @@ class OrcaUtil:
 
         orca_log_path = f'{self.BASE_SISTEMAS_PATH}\\{self.SYSTEM_NAME}_LOG'
         self.ORCA_LOG_PATH = '{}\\3step.log'.format(orca_log_path)
-
 
     def create_pborca_scripts(self):
         print_and_log(self.LOGGER.info, '\tCREATE 3STEP SCRIPT')
@@ -85,7 +85,7 @@ class OrcaUtil:
 
     def write_pborca_script_exe(self, orca_file: str, orca_script_lines: dict):
         try:
-            pbd_dict = return_pbd_from_srj(self.SYSTEM_DIR)
+            pbd_dict = return_properties_from_srj(self.SYSTEM_DIR)
         except FileNotFoundError:
             raise
 

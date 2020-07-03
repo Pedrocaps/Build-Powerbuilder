@@ -131,7 +131,7 @@ def return_obj_path(base_path, base_filter) -> str:
         return srj_list[0]
 
 
-def return_pbd_from_srj(srj_path) -> dict:
+def return_properties_from_srj(srj_path) -> dict:
     srj_file = return_obj_path(srj_path, '*.srj')
 
     lines = read_file(srj_file)
@@ -145,6 +145,8 @@ def return_pbd_from_srj(srj_path) -> dict:
             inout = splits[-1]
 
             pbd_dict[pbd] = inout
+
+            pass
 
     return pbd_dict
 
