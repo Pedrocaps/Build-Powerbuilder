@@ -1,9 +1,9 @@
 {
   "CHANGE_BASE_CWD": "C:\\Users\\plc2\\Desktop\\Orca",
-  "BASE_DIR": "SistemasSigod",
-  "SYSTEM_NAME": "sigod",
+  "BASE_DIR": "SistemasSeatt",
+  "SYSTEM_NAME": "seatt",
   "SYSTEM_DESC": "",
-  "TFS_BASE_DIR": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe\"",
+  "TFS_BASE_DIR": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe",
   "GET_TFS_DEFAULT": "get {} /force  /recursive",
   "VERSAO": "090005622",
   "FIGURAS_PATH": "\\\\fileserver.scl.corp\\BibAppl\\Figuras",

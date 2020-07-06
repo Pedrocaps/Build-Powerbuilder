@@ -9,13 +9,13 @@ from os import path
 
 import obj_worker
 
-CMD_BASE = 'cmd /c {}'
-GET_TFS_DEFAULT = "get {} /force  /recursive"
-
 
 def set_read_only(file_path):
-    cmd = f'attrib -R {file_path}'
-    run_cmd_default(cmd)
+    cmd1 = 'attrib'
+    cmd2 = '-R'
+    cmd3 = file_path
+
+    run_cmd_default([cmd1, cmd2, cmd3])
 
 
 def get_config() -> dict:
@@ -55,20 +55,49 @@ def get_error_from_orca_log(log_path) -> str:
     return errors_txt
 
 
-def run_cmd_default(cmd: str):
-    cmd = CMD_BASE.format(cmd)
-    os.system(cmd)
+def run_cmd_default(cmd: list):
+    import subprocess
+
+    i = 1
+    while i <= 5:
+        error_msg = ''
+        try:
+            cp = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                check=True, timeout=60*i)
+            if cp.returncode == 0:
+                break
+        except subprocess.TimeoutExpired as err:
+            error_msg = f'Timeout after {i} tries. {err}'
+            continue
+        except subprocess.CalledProcessError as err:
+            raise EnvironmentError(err.stderr)
+
+    if error_msg != '':
+        raise TimeoutError(error_msg)
+
+    return cp.stdout.strip().replace('\n', '-')
 
 
-def get_from_tfs(obj_path: str, tfs_base_dir: str, validate=False) -> bool:
-    get_path = GET_TFS_DEFAULT.format(obj_path)
-    cmd = f'{tfs_base_dir} {get_path}'
-    run_cmd_default(cmd)
+def get_from_tfs(obj_path: str, validate=False) -> bool:
+    config = get_config()
+    par0 = config['TFS_BASE_DIR']
+    par1 = 'get'
+    par2 = obj_path
+    par3 = '/force'
+    par4 = '/recursive'
+
+    try:
+        ret = run_cmd_default([par0, par1, par2, par3, par4])
+    except TimeoutError as err:
+        raise err
+    except EnvironmentError as err:
+        raise err
 
     if path.exists(obj_path) or not validate:
-        return True
+        return ret
     else:
-        raise FileNotFoundError
+        raise FileNotFoundError(f'File {obj_path} do not exists.')
 
 
 def change_cwd(cwd: str):
@@ -76,7 +105,7 @@ def change_cwd(cwd: str):
 
 
 def path_obj_from_line(base_path: str) -> str:
-    return base_path.replace('\\\\', '\\').replace('"', '').replace('pbl', 'pbg')
+    return base_path.replace('\\\\', '\\').replace('"', '').replace('.pbl', '.pbg')
 
 
 def chunks(length, n):
@@ -209,3 +238,7 @@ def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
         executor.map(obj_worker.get_obj_from_list, obj_chunks)
+
+
+def format_time_exec(total_time) -> str:
+    return '{:.2f} min'.format(total_time / 60) if total_time > 60 else '{:.2f} sec'.format(total_time)

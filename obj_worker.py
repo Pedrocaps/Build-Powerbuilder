@@ -76,8 +76,17 @@ def get_obj_from_list(obj_list: list):
     logger.info(f'Start getting {len(obj_list)} objects...')
 
     for i, obj in enumerate(obj_list):
-        logger.info(f'\tgetting {i} of {len(obj_list)} :{obj} ...')
-        util.get_from_tfs(obj, tfs_base)
+        logger.info(f'\tgetting {i + 1} of {len(obj_list)} : {obj} ...')
+
+        try:
+            ret = util.get_from_tfs(obj, True)
+            logger.info(f'\t\t{ret} ...')
+        except FileNotFoundError as err:
+            logger.info(f'\t\tError getting obj : {err}')
+            return
+        except TimeoutError as err:
+            logger.info(f'\t\tTimeout getting obj : {err}')
+            return
 
     logger.info(f'End getting objects...')
 
