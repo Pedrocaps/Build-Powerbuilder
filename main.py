@@ -262,7 +262,7 @@ def delete_temp_files(config):
     if config['DELETE_TEMP_FILES'].upper() == 'S':
         util.prepare_delete_files_filter(BASE_SISTEMAS_PATH, MAX_THREADS)
         util.print_and_log(logger.info,
-                           'Done delete temp files... ({} min)'.format(util.format_time_exec(time.time() - start)))
+                           'Done delete temp files... ({})'.format(util.format_time_exec(time.time() - start)))
     else:
         util.print_and_log(logger.info, 'Delete flag off...')
 

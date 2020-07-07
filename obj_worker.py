@@ -49,10 +49,17 @@ def obj_list_from_pbg(pbg):
             pbl_obj = splits[-1].strip()[ini:fim]
             if pbl_obj == pbl:
                 try:
-                    path = splits[1]
+                    obj_path = pbg[:pbg.rfind('\\')] if pbg.rfind('\\') > 0 else ''
 
-                    path_dwl = util.path_obj_from_line(path)
-                    get_objects_list.append(path_dwl)
+                    obj_name = util.path_obj_from_line(splits[1])
+                    obj_name = obj_name if obj_name.rfind('\\') == -1 else obj_name[obj_name.rfind('\\') + 1:]
+
+                    full_obj_path = '{}{}'.format(
+                        obj_path + '\\' if obj_path != '' else obj_path,
+                        obj_name
+                    )
+
+                    get_objects_list.append(full_obj_path)
                 except IndexError:
                     raise
                 except FileNotFoundError:
@@ -64,7 +71,6 @@ def obj_list_from_pbg(pbg):
 def get_obj_from_list(obj_list: list):
     config = util.get_config()
 
-    tfs_base = config['TFS_BASE_DIR']
     base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
     system_name = config['SYSTEM_NAME']
 
@@ -106,8 +112,11 @@ def delete_files_filter(files_path_list):
 
     for i, f in enumerate(files_path_list):
         try:
-            logger.info(f'\tgetting {i + 1} of {len(files_path_list)} :{f} ...')
+            logger.info(f'\tdeleting {i + 1} of {len(files_path_list)} :{f} ...')
             util.set_read_only(f)
             os.remove(f)
         except OSError as e:
             logger.info("\t\tError: %s : %s" % (f, e.strerror))
+            return
+
+    logger.info(f'End deleting objects...')
