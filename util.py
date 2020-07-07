@@ -242,3 +242,8 @@ def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
 
 def format_time_exec(total_time) -> str:
     return '{:.2f} min'.format(total_time / 60) if total_time > 60 else '{:.2f} sec'.format(total_time)
+
+
+def move_bin_files():
+    # TODO: move pbd and exe to bin folder
+    pass

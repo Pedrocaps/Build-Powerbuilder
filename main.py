@@ -315,6 +315,8 @@ def prepare_run_bat(orca_dict, config):
         util.print_and_log(logger.info, '##### RUN EXE BAT ######')
         try:
             run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_LOG'])
+
+            util.move_bin_files()
         except EnvironmentError as err:
             err_txt = '\tError executing EXE bat, open pbw and correct errors - {}'.format(err)
             util.print_and_log(logger.info, err_txt)
@@ -365,11 +367,6 @@ def start_process(config) -> bool:
     :param config: Config object
     :return:
     """
-
-    pbg_dict = pbg_list_from_from_pbt(PBT_PATH, False)
-    orca_dict = create_scripts(pbg_dict, config)
-    prepare_run_bat(orca_dict, config)
-    return
 
     try:
         pbg_dict = get_project()
