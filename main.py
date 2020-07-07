@@ -71,7 +71,7 @@ def pbg_list_from_from_pbt(pbt_path: str, use_tfs=True) -> dict:
 
 def set_globals(config: dict):
     global MAX_THREADS
-    MAX_THREADS = 5
+    MAX_THREADS = int(config['MAX_THREADS'])
     global TFS_BASE_DIR
     TFS_BASE_DIR = config['TFS_BASE_DIR']
     global SYSTEM_NAME
@@ -365,6 +365,12 @@ def start_process(config) -> bool:
     :param config: Config object
     :return:
     """
+
+    pbg_dict = pbg_list_from_from_pbt(PBT_PATH, False)
+    orca_dict = create_scripts(pbg_dict, config)
+    prepare_run_bat(orca_dict, config)
+    return
+
     try:
         pbg_dict = get_project()
 
