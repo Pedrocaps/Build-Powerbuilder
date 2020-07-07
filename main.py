@@ -72,14 +72,19 @@ def pbg_list_from_from_pbt(pbt_path: str, use_tfs=True) -> dict:
 def set_globals(config: dict):
     global MAX_THREADS
     MAX_THREADS = int(config['MAX_THREADS'])
+
     global TFS_BASE_DIR
     TFS_BASE_DIR = config['TFS_BASE_DIR']
-    global SYSTEM_NAME
-    SYSTEM_NAME = config['SYSTEM_NAME']
-    global SYSTEM_DIR
-    SYSTEM_DIR = config['BASE_DIR'] + '\\TECCOM\{}\\Fontes'.format(SYSTEM_NAME)
+
     global BASE_PATH
     BASE_PATH = config['CHANGE_BASE_CWD']
+
+    global SYSTEM_NAME
+    SYSTEM_NAME = config['SYSTEM_NAME']
+
+    global SYSTEM_DIR
+    SYSTEM_DIR = config['BASE_DIR'] + config['SYSTEM_PATH'].replace('SYSTEM_NAME', SYSTEM_NAME)
+
     global BASE_SISTEMAS_PATH
     BASE_SISTEMAS_PATH = f"{BASE_PATH}\\{config['BASE_DIR']}"
 

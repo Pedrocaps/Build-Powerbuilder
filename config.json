@@ -1,7 +1,9 @@
 {
-  "CHANGE_BASE_CWD": "C:\\Users\\plc2\\Desktop\\Orca",
-  "BASE_DIR": "SistemasSigod",
-  "SYSTEM_NAME": "sigod",
+  "CHANGE_BASE_CWD": "[BASE FOLDER WHERE YOUR PROJECTS WILL BE]",
+  "BASE_DIR": "[NAME OF THE PROJECT]",
+  "SYSTEM_PATH": "[WHERE YOUR PBT ARE]",
+  "SYSTEM_NAME": "[NAME OF UR SYSTEM, MUST BE SAME AS PBT]",
+
   "SYSTEM_DESC": "",
   "TFS_BASE_DIR": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe",
   "GET_TFS_DEFAULT": "get {} /force  /recursive",
