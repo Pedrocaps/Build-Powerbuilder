@@ -119,7 +119,6 @@ def run_bat(bat_path: str, log_path: str):
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True)
         i = i + 1
-        util.print_and_log(logger.info, '\t\t {} '.format(cp.stdout))
 
         if 'Result Code -22.' in cp.stdout:
             try:

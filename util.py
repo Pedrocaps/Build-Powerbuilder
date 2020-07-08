@@ -4,6 +4,7 @@ import json
 import logging
 import multiprocessing as mp
 import os
+import sys
 from io import TextIOWrapper
 from os import path
 
@@ -19,10 +20,15 @@ def set_read_only(file_path):
 
 
 def get_config() -> dict:
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-    CONFIG_PATH = os.path.join(ROOT_DIR, 'config.json')
+    # determine if application is a script file or frozen exe
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
 
-    with open(CONFIG_PATH) as json_data_file:
+    application_path = os.path.join(application_path, 'config.json')
+
+    with open(application_path) as json_data_file:
         data = json.load(json_data_file)
     return data
 
