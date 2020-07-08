@@ -85,7 +85,7 @@ def get_obj_from_list(obj_list: list):
         logger.info(f'\tgetting {i + 1} of {len(obj_list)} : {obj} ...')
 
         try:
-            ret = util.get_from_tfs(obj, True)
+            ret = util.get_from_tfs(obj, config, True)
             logger.info(f'\t\t{ret} ...')
         except FileNotFoundError as err:
             logger.info(f'\t\tError getting obj : {err}')

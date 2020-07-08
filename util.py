@@ -19,7 +19,10 @@ def set_read_only(file_path):
 
 
 def get_config() -> dict:
-    with open('C:\\MyProjects\\GetBuildSigod\\config.json') as json_data_file:
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    CONFIG_PATH = os.path.join(ROOT_DIR, 'config.json')
+
+    with open(CONFIG_PATH) as json_data_file:
         data = json.load(json_data_file)
     return data
 
@@ -79,8 +82,7 @@ def run_cmd_default(cmd: list):
     return cp.stdout.strip().replace('\n', '-')
 
 
-def get_from_tfs(obj_path: str, validate=False) -> bool:
-    config = get_config()
+def get_from_tfs(obj_path: str, config, validate=False) -> bool:
     par0 = config['TFS_BASE_DIR']
     par1 = 'get'
     par2 = obj_path

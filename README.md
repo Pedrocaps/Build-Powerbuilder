@@ -6,5 +6,6 @@ Python project to automate powerbuilder build
 3. SYSTEM_NAME = name of your system (pbt)
 
 ## TODO:
-2. You need to create the workspace on TFS first, will automate this also
-3. Make it also compile complimentary files. images, dlls, ... 
+1. You need to create the workspace on TFS first, will automate this also
+2. Make it also compile complimentary files. images, dlls, ... 
+3. pyinstaller --onefile pythonScriptName.py

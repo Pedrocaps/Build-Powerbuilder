@@ -8,9 +8,9 @@ import orca_util
 import util
 
 
-def get_pbt(pbt_path):
+def get_pbt(pbt_path, config):
     try:
-        util.get_from_tfs(pbt_path)
+        util.get_from_tfs(pbt_path, config)
         _ = util.read_file(pbt_path)
     except FileNotFoundError:
         raise
@@ -18,11 +18,11 @@ def get_pbt(pbt_path):
         raise
 
 
-def get_pbr() -> str:
+def get_pbr(config) -> str:
     base_path = f'{BASE_PATH}\\{SYSTEM_DIR}'
     pbr_path = '{}\\{}'.format(base_path, '*.pbr'.format(SYSTEM_NAME))
 
-    util.get_from_tfs(pbr_path, False)
+    util.get_from_tfs(pbr_path, config, False)
 
     pbr_list = []
     os.chdir(base_path)
@@ -35,7 +35,7 @@ def get_pbr() -> str:
         return pbr_list[0]
 
 
-def pbg_list_from_from_pbt(pbt_path: str, use_tfs=True) -> dict:
+def pbg_list_from_from_pbt(pbt_path: str, config, use_tfs=True) -> dict:
     pbt_content = util.read_file(pbt_path)
 
     lines = pbt_content.readlines()
@@ -54,7 +54,7 @@ def pbg_list_from_from_pbt(pbt_path: str, use_tfs=True) -> dict:
         pbl_rep = util.path_obj_from_line(pbl)
         if use_tfs:
             logger.info(f'\tGetting PBG {pbl_rep}')
-            util.get_from_tfs(pbl_rep)
+            util.get_from_tfs(pbl_rep, config)
 
         abs_path = os.path.abspath(pbl_rep)
 
@@ -119,6 +119,8 @@ def run_bat(bat_path: str, log_path: str):
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True)
         i = i + 1
+        util.print_and_log(logger.info, '\t\t {} '.format(cp.stdout))
+
         if 'Result Code -22.' in cp.stdout:
             try:
                 errors_txt = util.get_error_from_orca_log(log_path)
@@ -183,12 +185,12 @@ def change_pbr_relative_path():
     util.set_read_only(file_path)
 
 
-def get_project() -> dict:
+def get_project(config) -> dict:
     try:
 
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBT ######')
-        get_pbt(PBT_PATH)
+        get_pbt(PBT_PATH, config)
         util.print_and_log(logger.info,
                            'Done getting {} ... ({})'.format(PBT_PATH, util.format_time_exec(time.time() - start)))
 
@@ -202,13 +204,13 @@ def get_project() -> dict:
 
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBG ######')
-        pbg_dict = pbg_list_from_from_pbt(PBT_PATH)
+        pbg_dict = pbg_list_from_from_pbt(PBT_PATH, config)
         pbg_list = pbg_dict['ALL']
         util.print_and_log(logger.info, 'Done getting PBG(D)s...'.format(util.format_time_exec(time.time() - start)))
 
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBR ######')
-        pbr_path = get_pbr()
+        pbr_path = get_pbr(config)
         util.print_and_log(logger.info,
                            'Done getting pbr {}... ({})'.format(pbr_path, util.format_time_exec(time.time() - start)))
 
@@ -342,11 +344,14 @@ def main():
     :return:
     """
 
-    start = time.time()
+    try:
+        start = time.time()
 
-    config = util.get_config()
-    set_globals(config)
-    util.change_cwd(BASE_PATH)
+        config = util.get_config()
+        set_globals(config)
+        util.change_cwd(BASE_PATH)
+    except Exception as err:
+        print(err)
 
     try:
         create_logger()
@@ -374,7 +379,7 @@ def start_process(config) -> bool:
     """
 
     try:
-        pbg_dict = get_project()
+        pbg_dict = get_project(config)
 
         orca_dict = create_scripts(pbg_dict, config)
 
