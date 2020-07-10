@@ -92,6 +92,9 @@ def set_globals(config: dict):
     GET_TFS_DEFAULT = config['GET_TFS_DEFAULT']
     global PBT_PATH
     PBT_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbt'.format(SYSTEM_NAME))
+    global PBW_PATH
+    PBW_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbw'.format(SYSTEM_NAME))
+
     global VERSAO
     VERSAO = config['VERSAO']
     global FIGURAS_PATH
@@ -198,11 +201,9 @@ def get_project(config) -> dict:
 
         start = time.time()
         util.print_and_log(logger.info, '##### CREATE PBW ######')
-        pbw_path = SYSTEM_DIR.format(SYSTEM_NAME)
-        pbw_path = "{}\\{}.pbw".format(pbw_path, SYSTEM_NAME)
-        create_pbw(pbw_path)
+        create_pbw(PBW_PATH)
         util.print_and_log(logger.info,
-                           'Done creating {} ... ({})'.format(pbw_path, util.format_time_exec(time.time() - start)))
+                           'Done creating {} ... ({})'.format(PBW_PATH, util.format_time_exec(time.time() - start)))
 
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBR ######')
