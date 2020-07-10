@@ -49,7 +49,7 @@ def pbg_list_from_from_pbt(pbt_path: str, config, use_tfs=True) -> dict:
         if splits[0] == 'LibList':
             pbls = splits[1].split(';')[:-1]
 
-    util.change_cwd(SYSTEM_DIR.format(SYSTEM_NAME.upper()))
+    util.change_cwd('{}\\{}'.format(BASE_PATH, SYSTEM_DIR))
     for pbl in pbls:
         pbl_rep = util.path_obj_from_line(pbl)
         if use_tfs:
@@ -91,7 +91,7 @@ def set_globals(config: dict):
     global GET_TFS_DEFAULT
     GET_TFS_DEFAULT = config['GET_TFS_DEFAULT']
     global PBT_PATH
-    PBT_PATH = '{}\\{}'.format(SYSTEM_DIR, '{}.pbt'.format(SYSTEM_NAME))
+    PBT_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbt'.format(SYSTEM_NAME))
     global VERSAO
     VERSAO = config['VERSAO']
     global FIGURAS_PATH
@@ -157,7 +157,7 @@ def change_sra_version():
             else:
                 f.writelines(line)
 
-    util.set_read_only(file_path)
+    util.set_read_only(file_path, '+')
 
 
 def change_pbr_relative_path():
@@ -165,9 +165,11 @@ def change_pbr_relative_path():
     sra_path = f'{base_path}\\{SYSTEM_NAME}.pbr'
     file_path = f'{sra_path}'
 
+    util.change_cwd(base_path)
+
     util.set_read_only(file_path)
 
-    replace = '..\\..\\..'
+    replace = '..\\'
 
     with open(file_path, 'r') as f:
         get_all = f.readlines()
@@ -175,18 +177,19 @@ def change_pbr_relative_path():
     with open(file_path, 'w') as f:
         for i, line in enumerate(get_all, 0):
             if replace in line:
-                replace_str = line.replace(replace, BASE_SISTEMAS_PATH)
-                f.writelines(replace_str)
+                replace_str = os.path.abspath(line)
+            elif '.pbl' in line:
+                replace_str = line
             else:
                 replace_str = f'{FIGURAS_PATH}{line}'
-                f.writelines(replace_str)
 
-    util.set_read_only(file_path)
+            f.writelines(replace_str)
+
+    util.set_read_only(file_path, '+')
 
 
 def get_project(config) -> dict:
     try:
-
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBT ######')
         get_pbt(PBT_PATH, config)
@@ -202,28 +205,28 @@ def get_project(config) -> dict:
                            'Done creating {} ... ({})'.format(pbw_path, util.format_time_exec(time.time() - start)))
 
         start = time.time()
-        util.print_and_log(logger.info, '##### GET PBG ######')
-        pbg_dict = pbg_list_from_from_pbt(PBT_PATH, config)
-        pbg_list = pbg_dict['ALL']
-        util.print_and_log(logger.info, 'Done getting PBG(D)s...'.format(util.format_time_exec(time.time() - start)))
-
-        start = time.time()
         util.print_and_log(logger.info, '##### GET PBR ######')
         pbr_path = get_pbr(config)
         util.print_and_log(logger.info,
                            'Done getting pbr {}... ({})'.format(pbr_path, util.format_time_exec(time.time() - start)))
 
         start = time.time()
-        util.print_and_log(logger.info, '##### GET OBJ ######')
-        util.prepare_get_obj_from_pbg_thread(pbg_list, MAX_THREADS)
-        util.print_and_log(logger.info,
-                           'Done getting all objects... ({})'.format(util.format_time_exec(time.time() - start)))
-
-        start = time.time()
         util.print_and_log(logger.info, '##### CHANGE PBR BASE PATH ######')
         change_pbr_relative_path()
         util.print_and_log(logger.info,
                            'Done changing PBR BASE PATH ({})'.format(util.format_time_exec(time.time() - start)))
+
+        start = time.time()
+        util.print_and_log(logger.info, '##### GET PBG ######')
+        pbg_dict = pbg_list_from_from_pbt(PBT_PATH, config)
+        pbg_list = pbg_dict['ALL']
+        util.print_and_log(logger.info, 'Done getting PBG(D)s...'.format(util.format_time_exec(time.time() - start)))
+
+        start = time.time()
+        util.print_and_log(logger.info, '##### GET OBJ ######')
+        util.prepare_get_obj_from_pbg_thread(pbg_list, MAX_THREADS)
+        util.print_and_log(logger.info,
+                           'Done getting all objects... ({})'.format(util.format_time_exec(time.time() - start)))
 
         start = time.time()
         util.print_and_log(logger.info, '##### GET HELP FILE ######')
@@ -243,6 +246,10 @@ def get_project(config) -> dict:
         raise ex
     except EnvironmentError as ex:
         raise ex
+
+    finally:
+        # TODO: undo tfs checkout
+        pass
 
 
 def create_logger():

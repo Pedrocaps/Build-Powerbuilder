@@ -11,9 +11,9 @@ from os import path
 import obj_worker
 
 
-def set_read_only(file_path):
+def set_read_only(file_path, set='-'):
     cmd1 = 'attrib'
-    cmd2 = '-R'
+    cmd2 = f'{set}R'  # - remove read only + add readonly
     cmd3 = file_path
 
     run_cmd_default([cmd1, cmd2, cmd3])
@@ -68,12 +68,12 @@ def run_cmd_default(cmd: list):
     import subprocess
 
     i = 1
-    while i <= 5:
+    while i <= 4:
         error_msg = ''
         try:
             cp = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                check=True, timeout=60*i)
+                                check=True, timeout=10*i)
             if cp.returncode == 0:
                 break
         except subprocess.TimeoutExpired as err:

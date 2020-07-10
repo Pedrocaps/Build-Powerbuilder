@@ -1,4 +1,5 @@
 from util import pbd_list_as_string, write_new_line, return_obj_path, return_properties_from_srj, print_and_log
+import os
 
 
 class OrcaUtil:
@@ -6,8 +7,14 @@ class OrcaUtil:
         self.SYSTEM_NAME = config['SYSTEM_NAME']
         self.BASE_PATH = config['CHANGE_BASE_CWD']
         self.BASE_DIR = config['BASE_DIR']
-        self.SYSTEM_DIR = f'{self.BASE_PATH}\\{self.BASE_DIR}\\TECCOM\{self.SYSTEM_NAME}\\Fontes'
+        self.SYSTEM_DIR = config['BASE_DIR'] + config['SYSTEM_PATH'].replace('SYSTEM_NAME', self.SYSTEM_NAME)
+        self.SYSTEM_DIR = '{}\\{}'.format(self.BASE_PATH, self.SYSTEM_DIR)
+
         self.PBT_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbt'.format(self.SYSTEM_NAME))
+        self.PBR_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbr'.format(self.SYSTEM_NAME))
+        self.PBL_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbl'.format(self.SYSTEM_NAME))
+        self.EXE_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.exe'.format(self.SYSTEM_NAME))
+
         self.BASE_SISTEMAS_PATH = f"{self.BASE_PATH}\\{config['BASE_DIR']}"
         self.CONFIG_ORCA = config['PBORCA']
         self.VERSAO = config['VERSAO']
@@ -95,9 +102,7 @@ class OrcaUtil:
                     lib_list = ';'.join([pbl for pbl in pbd_dict])
                     v = v.format(f'"{lib_list}"')
                 elif k == 'SET_APPLICATION':
-                    sra_path = f'{self.SYSTEM_DIR}\\{self.SYSTEM_NAME}.pbl'
-                    sra_path = f'"{sra_path}" "{self.SYSTEM_NAME}"'
-                    v = v.format(sra_path)
+                    v = v.format(f'"{self.PBL_PATH}" "{self.SYSTEM_NAME}"')
                 elif k == 'FILE_VERSION_NUM':
                     version = f'{self.VERSAO[0:2]},{self.VERSAO[2:5]},{self.VERSAO[5:]},{0}'
                     v = v.format(f'"{version}"')
@@ -125,7 +130,7 @@ class OrcaUtil:
                     pbds = ''.join([f'build library "{k}" "" pbd\n' if v == '1' else '' for k, v in pbd_dict.items()])
                     v = v.format(pbds)
                 elif k == 'BUILD_EXE':
-                    exe_name = f'{self.SYSTEM_DIR}\\{self.SYSTEM_NAME}.exe'
+                    exe_name = self.EXE_PATH
                     ico_path = ''
                     pbr_path = return_obj_path(self.SYSTEM_DIR, f'{self.SYSTEM_NAME}.pbr')
                     build_pbd = ''.join(['n' if v == '0' else 'y' for k, v in pbd_dict.items()])
