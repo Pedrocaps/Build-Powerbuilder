@@ -115,7 +115,7 @@ def create_pbw(pbw_path: str):
 
 def run_bat(bat_path: str, log_path: str):
     i = 1
-    max_loop = 2
+    max_loop = 3
     while i <= max_loop:
         util.print_and_log(logger.info, '\tRunning {} of {} bat executions'.format(i, max_loop))
         util.print_and_log(logger.info, '\t\t see {} for details '.format(log_path))
@@ -246,6 +246,8 @@ def get_project(config) -> dict:
     except FileNotFoundError as ex:
         raise ex
     except EnvironmentError as ex:
+        raise ex
+    except ValueError as ex:
         raise ex
 
     finally:
@@ -393,7 +395,7 @@ def start_process(config) -> bool:
         prepare_run_bat(orca_dict, config)
 
         delete_temp_files(config)
-    except (FileNotFoundError, EnvironmentError, SyntaxError) as ex:
+    except (FileNotFoundError, EnvironmentError, SyntaxError, ValueError) as ex:
         util.print_and_log(logger.error, ex)
         return False
 

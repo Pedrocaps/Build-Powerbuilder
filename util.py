@@ -245,7 +245,11 @@ def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
     obj_chunks = chunker_list(all_obj_list, max_threads)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-        executor.map(obj_worker.get_obj_from_list, obj_chunks)
+        result = executor.map(obj_worker.get_obj_from_list, obj_chunks)
+
+        for ret in result:
+            if not ret:
+                raise ValueError('There was a error downloading a object.. see log for more info.')
 
 
 def format_time_exec(total_time) -> str:

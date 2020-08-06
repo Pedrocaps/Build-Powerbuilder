@@ -68,7 +68,7 @@ def obj_list_from_pbg(pbg):
     return get_objects_list
 
 
-def get_obj_from_list(obj_list: list):
+def get_obj_from_list(obj_list: list) -> bool:
     config = util.get_config()
 
     base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
@@ -89,12 +89,13 @@ def get_obj_from_list(obj_list: list):
             logger.info(f'\t\t{ret} ...')
         except FileNotFoundError as err:
             logger.info(f'\t\tError getting obj : {err}')
-            return
+            # return False
         except TimeoutError as err:
             logger.info(f'\t\tTimeout getting obj : {err}')
-            return
+            return False
 
     logger.info(f'End getting objects...')
+    return True
 
 
 def delete_files_filter(files_path_list):
