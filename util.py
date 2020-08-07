@@ -1,5 +1,6 @@
 import concurrent.futures
 import glob
+import re
 import json
 import logging
 import multiprocessing as mp
@@ -168,7 +169,21 @@ def return_obj_path(base_path, base_filter) -> str:
         return srj_list[0]
 
 
-def return_properties_from_srj(srj_path) -> dict:
+def return_properties_srj(srj_path) -> dict:
+    srj_file = return_obj_path(srj_path, '*.srj')
+    lines = read_file(srj_file)
+    ret_dict = {}
+
+    for line in lines:
+        if re.match(r'\b[A-Z]{3}:', line):
+            splits = line.split(':')
+
+            ret_dict[splits[0]] = splits[1].strip()
+
+    return ret_dict
+
+
+def return_pbd_from_srj(srj_path) -> dict:
     srj_file = return_obj_path(srj_path, '*.srj')
 
     lines = read_file(srj_file)
@@ -249,7 +264,7 @@ def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
 
         for ret in result:
             if not ret:
-                raise ValueError('There was a error downloading a object.. see log for more info.')
+                raise ValueError('There was an error downloading a object.. see object log for more info...')
 
 
 def format_time_exec(total_time) -> str:

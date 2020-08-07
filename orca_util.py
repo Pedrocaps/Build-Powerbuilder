@@ -1,5 +1,7 @@
-from util import pbd_list_as_string, write_new_line, return_obj_path, return_properties_from_srj, print_and_log
+from util import pbd_list_as_string, write_new_line, return_obj_path, return_pbd_from_srj, print_and_log,\
+    return_properties_srj
 import os
+import re
 
 
 class OrcaUtil:
@@ -9,6 +11,8 @@ class OrcaUtil:
         self.BASE_DIR = config['BASE_DIR']
         self.SYSTEM_DIR = config['BASE_DIR'] + config['SYSTEM_PATH'].replace('SYSTEM_NAME', self.SYSTEM_NAME)
         self.SYSTEM_DIR = '{}\\{}'.format(self.BASE_PATH, self.SYSTEM_DIR)
+
+        self.ICO_PATH = config['ICO_PATH']
 
         self.PBT_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbt'.format(self.SYSTEM_NAME))
         self.PBR_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbr'.format(self.SYSTEM_NAME))
@@ -21,6 +25,7 @@ class OrcaUtil:
         self.PBD_LIST = pbd_list
         self.LOGGER = logger
         self.SYSTEM_DESC = config['SYSTEM_DESC']
+        self.USE_SRJ = str(config['USE_SRJ']).upper() == 'S'
 
         bat_3step = self.CONFIG_ORCA['BAT_3STEP'].format(self.SYSTEM_NAME)
         self.BAT_PATH = f"{self.BASE_SISTEMAS_PATH}\\{bat_3step}"
@@ -92,7 +97,8 @@ class OrcaUtil:
 
     def write_pborca_script_exe(self, orca_file: str, orca_script_lines: dict):
         try:
-            pbd_dict = return_properties_from_srj(self.SYSTEM_DIR)
+            pbd_dict = return_pbd_from_srj(self.SYSTEM_DIR)
+            prp_dict = return_properties_srj(self.SYSTEM_DIR)
         except FileNotFoundError:
             raise
 
@@ -104,34 +110,59 @@ class OrcaUtil:
                 elif k == 'SET_APPLICATION':
                     v = v.format(f'"{self.PBL_PATH}" "{self.SYSTEM_NAME}"')
                 elif k == 'FILE_VERSION_NUM':
-                    version = f'{self.VERSAO[0:2]},{self.VERSAO[2:5]},{self.VERSAO[5:]},{0}'
+                    if self.USE_SRJ:
+                        version = prp_dict['FVN'].strip()
+                    else:
+                        version = f'{self.VERSAO[0:2]},{self.VERSAO[2:5]},{self.VERSAO[5:]},{0}'
                     v = v.format(f'"{version}"')
                 elif k == 'FILE_VERSION':
-                    version = f'{self.VERSAO[0:2]}.{self.VERSAO[2:5]}.{self.VERSAO[5:]}'
+                    if self.USE_SRJ:
+                        version = prp_dict['FVS'].strip()
+                    else:
+                        version = f'{self.VERSAO[0:2]}.{self.VERSAO[2:5]}.{self.VERSAO[5:]}'
                     v = v.format(f'"{version}"')
                 elif k == 'COMPANY_NAME':
-                    company = 'ENERGISA S.A.'
+                    if self.USE_SRJ:
+                        company = prp_dict['COM'].strip()
+                    else:
+                        company = 'S.A.'
                     v = v.format(f'"{company}"')
                 elif k == 'DESCRIPTION':
-                    desc = 'Sistema de Controle de Cálculo de Indenizações'
+                    if self.USE_SRJ:
+                        desc = self.decode_pb_line(prp_dict['DES'])
+                    else:
+                        desc = 'Sistema de Controle de Cálculo de Indenizações'
                     v = v.format(f'"{desc}"')
                 elif k == 'COPYRIGHT':
-                    copy_right = 'ENERGISA S.A.'
+                    if self.USE_SRJ:
+                        copy_right = prp_dict['CPY'].strip()
+                    else:
+                        copy_right = 'SA'
                     v = v.format(f'"{copy_right}"')
                 elif k == 'PRODUCT_NAME':
-                    v = v.format(f'"{self.SYSTEM_NAME}"')
+                    if self.USE_SRJ:
+                        prd = prp_dict['PRD']
+                        v = v.format(f'"{prd}"')
+                    else:
+                        v = v.format(f'"{self.SYSTEM_NAME}"')
                 elif k == 'PRODUCT_VERSION_NUM':
-                    version = f'{self.VERSAO[0:2]},{self.VERSAO[2:5]},{self.VERSAO[5:]}'
+                    if self.USE_SRJ:
+                        version = prp_dict['PVN'].strip()
+                    else:
+                        version = f'{self.VERSAO[0:2]},{self.VERSAO[2:5]},{self.VERSAO[5:]}'
                     v = v.format(f'"{version}"')
                 elif k == 'PRODUCT_VERSION':
-                    version = f'{self.VERSAO[0:2]}.{self.VERSAO[2:5]}.{self.VERSAO[5:]}'
+                    if self.USE_SRJ:
+                        version = prp_dict['PVS'].strip()
+                    else:
+                        version = f'{self.VERSAO[0:2]}.{self.VERSAO[2:5]}.{self.VERSAO[5:]}'
                     v = v.format(f'"{version}"')
                 elif k == 'BUILD_LIBRARY':
                     pbds = ''.join([f'build library "{k}" "" pbd\n' if v == '1' else '' for k, v in pbd_dict.items()])
                     v = v.format(pbds)
                 elif k == 'BUILD_EXE':
                     exe_name = self.EXE_PATH
-                    ico_path = ''
+                    ico_path = self.ICO_PATH
                     pbr_path = return_obj_path(self.SYSTEM_DIR, f'{self.SYSTEM_NAME}.pbr')
                     build_pbd = ''.join(['n' if v == '0' else 'y' for k, v in pbd_dict.items()])
                     exe_line = f'"{exe_name}" "{ico_path}" "{pbr_path}" "{build_pbd}"'
@@ -142,3 +173,30 @@ class OrcaUtil:
     def write_bat(self, cmd: str, bat_name):
         with open(bat_name, 'w+') as f:
             write_new_line(file=f, text=cmd)
+
+    def decode_pb_line(self, line):
+        split_arr = line.split('$$')
+        hex_str = ''
+        str_ret = ''
+        find = False
+
+        for s in split_arr:
+            if find:
+                hex_str = hex_str + s
+                some_bytes = bytes.fromhex(hex_str)
+                decoded = some_bytes.decode('utf-16le')
+
+                par_str = decoded
+                find = False
+                hex_str = ''
+            elif re.match(r'HEX[0-9]', s):
+                find = True
+                par_str = ''
+            elif s == 'ENDHEX':
+                par_str = ''
+            else:
+                par_str = s
+
+            str_ret = str_ret + par_str
+
+        return str_ret

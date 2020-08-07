@@ -8,11 +8,13 @@
   "TFS_BASE_DIR": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe",
   "GET_TFS_DEFAULT": "get {} /force  /recursive",
   "VERSAO": "090005622",
-  "FIGURAS_PATH": "\\\\fileserver.scl.corp\\BibAppl\\Figuras",
-  "ICO_PATH": "",
+  "FIGURAS_PATH": "\\\\fileserver.scl.corp\\BibAppl\\Figuras\\",
+  "ICO_PATH": "\\\\fileserver.scl.corp\\figuras$\\SIgod.ICO",
   "GET_HELP_FILE": "S",
   "CREATE_EXE": "S",
-  "DELETE_TEMP_FILES": "S",
+  "USE_SRJ": "S",
+  "DELETE_TEMP_FILES": "N",
+
   "COMPLEMENTOS_PATH": "",
   "MAX_THREADS":"10",
   "PBORCA": {

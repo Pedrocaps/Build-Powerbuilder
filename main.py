@@ -179,6 +179,8 @@ def change_pbr_relative_path():
 
     with open(file_path, 'w') as f:
         for i, line in enumerate(get_all, 0):
+            if line.strip() == '':
+                continue
             if replace in line:
                 replace_str = os.path.abspath(line)
             elif '.pbl' in line:
