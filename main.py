@@ -113,7 +113,7 @@ def create_pbw(pbw_path: str):
         f.write('DefaultRemoteTarget "{}.pbt";\n'.format(SYSTEM_NAME))
 
 
-def run_bat(bat_path: str, log_path: str):
+def run_bat(bat_path: str, log_path: str, bat_type: str):
     i = 1
     max_loop = 3
     while i <= max_loop:
@@ -122,6 +122,10 @@ def run_bat(bat_path: str, log_path: str):
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True)
         i = i + 1
+
+        if bat_type == 'EXE':
+            with open(log_path, 'w+') as f:
+                f.write(cp.stdout)
 
         if 'Result Code -22.' in cp.stdout:
             try:
@@ -215,7 +219,7 @@ def get_project(config) -> dict:
 
         start = time.time()
         util.print_and_log(logger.info, '##### CHANGE PBR BASE PATH ######')
-        change_pbr_relative_path()
+        # change_pbr_relative_path()
         util.print_and_log(logger.info,
                            'Done changing PBR BASE PATH ({})'.format(util.format_time_exec(time.time() - start)))
 
@@ -303,6 +307,7 @@ def create_scripts(pbg_dict, config) -> dict:
     orca_dict['BAT_PATH'] = orca_helper.BAT_PATH
     orca_dict['BAT_EXE'] = orca_helper.BAT_EXE
     orca_dict['ORCA_LOG'] = orca_helper.ORCA_LOG_PATH
+    orca_dict['ORCA_EXE_LOG'] = orca_helper.ORCA_LOG_EXE_PATH
 
     return orca_dict
 
@@ -310,7 +315,7 @@ def create_scripts(pbg_dict, config) -> dict:
 def prepare_run_bat(orca_dict, config):
     start = time.time()
     try:
-        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'])
+        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'], '3STEP')
     except EnvironmentError as err:
         err_txt = '\tError executing 3 step bat, open pbw and correct errors : \n\t\t{}'.format(err)
         util.print_and_log(logger.info, err_txt)
@@ -325,14 +330,14 @@ def prepare_run_bat(orca_dict, config):
     if config['CREATE_EXE'].upper() == 'S':
         start = time.time()
         util.print_and_log(logger.info, '##### CHANGE VGSVERSAO ######')
-        change_sra_version()
+        # change_sra_version()
         util.print_and_log(logger.info,
                            'Done changing vgsVersao... ({})'.format(util.format_time_exec(time.time() - start)))
 
         start = time.time()
         util.print_and_log(logger.info, '##### RUN EXE BAT ######')
         try:
-            run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_LOG'])
+            run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_EXE_LOG'], 'EXE')
 
             util.move_bin_files()
         except EnvironmentError as err:

@@ -27,14 +27,22 @@ class OrcaUtil:
         self.SYSTEM_DESC = config['SYSTEM_DESC']
         self.USE_SRJ = str(config['USE_SRJ']).upper() == 'S'
 
+        orca_log_path = f'{self.BASE_SISTEMAS_PATH}\\{self.SYSTEM_NAME}_LOG'
+
         bat_3step = self.CONFIG_ORCA['BAT_3STEP'].format(self.SYSTEM_NAME)
-        self.BAT_PATH = f"{self.BASE_SISTEMAS_PATH}\\{bat_3step}"
+        dat_3step = self.CONFIG_ORCA['ORCA_3STEP_DAT'].format(self.SYSTEM_NAME)
+
+        self.BAT_PATH = f"{orca_log_path}\\{bat_3step}"
+        self.DAT_PATH = f"{orca_log_path}\\{dat_3step}"
 
         bat_exe = self.CONFIG_ORCA['BAT_BUILD_EXE'].format(self.SYSTEM_NAME)
-        self.BAT_EXE = f"{self.BASE_SISTEMAS_PATH}\\{bat_exe}"
+        dat_exe = self.CONFIG_ORCA['ORCA_EXE_DAT'].format(self.SYSTEM_NAME)
 
-        orca_log_path = f'{self.BASE_SISTEMAS_PATH}\\{self.SYSTEM_NAME}_LOG'
+        self.BAT_EXE = f"{orca_log_path}\\{bat_exe}"
+        self.DAT_EXE = f"{orca_log_path}\\{dat_exe}"
+
         self.ORCA_LOG_PATH = '{}\\3step.log'.format(orca_log_path)
+        self.ORCA_LOG_EXE_PATH = '{}\\exe_orca_log.txt'.format(orca_log_path)
 
     def create_pborca_scripts(self):
         print_and_log(self.LOGGER.info, '\tCREATE 3STEP SCRIPT')
@@ -49,26 +57,22 @@ class OrcaUtil:
         orca_exe_path = self.CONFIG_ORCA['ORCA_EXE']
         orca_exe = f'"{orca_exe_path}"'
 
-        orca_3step_dat = self.CONFIG_ORCA['ORCA_3STEP_DAT'].format(self.SYSTEM_NAME)
-        orca_3_step_file = f"{self.BASE_SISTEMAS_PATH}\\{orca_3step_dat}"
         cmd_bat = f'echo %time%\n' \
-                  f'{orca_exe} {orca_3_step_file}\n' \
+                  f'{orca_exe} {self.DAT_PATH}\n' \
                   f'echo %time%'
 
         orca_3step_base_scrpt = self.CONFIG_ORCA['BASE_3STEP_SCRIPT']
         orca_script_lines = dict(orca_3step_base_scrpt)
 
-        self.write_pborca_script_3step(orca_3_step_file, orca_script_lines, self.PBD_LIST)
+        self.write_pborca_script_3step(self.DAT_PATH, orca_script_lines, self.PBD_LIST)
         self.write_bat(cmd_bat, self.BAT_PATH)
 
     def create_pborca_exe_script(self):
         orca_exe_path = self.CONFIG_ORCA['ORCA_EXE']
         orca_exe = f'"{orca_exe_path}"'
 
-        orca_exe_dat = self.CONFIG_ORCA['ORCA_EXE_DAT'].format(self.SYSTEM_NAME)
-        orca_exe_file = f"{self.BASE_SISTEMAS_PATH}\\{orca_exe_dat}"
         cmd_bat = f'echo %time%\n' \
-                  f'{orca_exe} {orca_exe_file}\n' \
+                  f'{orca_exe} {self.DAT_EXE}\n' \
                   f'echo %time%'
 
         self.write_bat(cmd_bat, self.BAT_EXE)
@@ -76,7 +80,7 @@ class OrcaUtil:
         orca_exe_base_scrpt = self.CONFIG_ORCA['BASE_EXE_SCRIPT']
         orca_script_lines = dict(orca_exe_base_scrpt)
 
-        self.write_pborca_script_exe(orca_exe_file, orca_script_lines)
+        self.write_pborca_script_exe(self.DAT_EXE, orca_script_lines)
 
         pass
 
@@ -123,7 +127,7 @@ class OrcaUtil:
                     v = v.format(f'"{version}"')
                 elif k == 'COMPANY_NAME':
                     if self.USE_SRJ:
-                        company = prp_dict['COM'].strip()
+                        company = self.decode_pb_line(prp_dict['COM'].strip())
                     else:
                         company = 'S.A.'
                     v = v.format(f'"{company}"')
@@ -135,7 +139,7 @@ class OrcaUtil:
                     v = v.format(f'"{desc}"')
                 elif k == 'COPYRIGHT':
                     if self.USE_SRJ:
-                        copy_right = prp_dict['CPY'].strip()
+                        copy_right = self.decode_pb_line(prp_dict['CPY'].strip())
                     else:
                         copy_right = 'SA'
                     v = v.format(f'"{copy_right}"')
@@ -158,7 +162,8 @@ class OrcaUtil:
                         version = f'{self.VERSAO[0:2]}.{self.VERSAO[2:5]}.{self.VERSAO[5:]}'
                     v = v.format(f'"{version}"')
                 elif k == 'BUILD_LIBRARY':
-                    pbds = ''.join([f'build library "{k}" "" pbd\n' if v == '1' else '' for k, v in pbd_dict.items()])
+                    pbds = ''.join([f'build library "{k}" "" pbd\n'
+                                    if v == '1' and '.pbd' not in k else '' for k, v in pbd_dict.items()])
                     v = v.format(pbds)
                 elif k == 'BUILD_EXE':
                     exe_name = self.EXE_PATH

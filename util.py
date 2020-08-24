@@ -223,6 +223,8 @@ def prepare_delete_files_filter(base_path, max_threads):
     all_obj_list = list(set(glob.glob(path_full, recursive=True)) - set(glob.glob(path_full + 'pb*', recursive=True) +
                                                                         glob.glob(path_full + 'sra', recursive=True) +
                                                                         glob.glob(path_full + 'exe', recursive=True) +
+                                                                        glob.glob(path_full + 'dat', recursive=True) +
+                                                                        glob.glob(path_full + 'bat', recursive=True) +
                                                                         glob.glob(path_full + 'log', recursive=True)
                                                                         ))
 
