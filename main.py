@@ -2,7 +2,6 @@ import glob
 import os
 import subprocess
 import time
-from io import TextIOWrapper
 
 import orca_util
 import util
@@ -88,6 +87,9 @@ def set_globals(config: dict):
     global BASE_SISTEMAS_PATH
     BASE_SISTEMAS_PATH = f"{BASE_PATH}\\{config['BASE_DIR']}"
 
+    global DIST_FOLDER
+    DIST_FOLDER = config['DIST_FOLDER']
+
     global GET_TFS_DEFAULT
     GET_TFS_DEFAULT = config['GET_TFS_DEFAULT']
     global PBT_PATH
@@ -113,7 +115,7 @@ def create_pbw(pbw_path: str):
         f.write('DefaultRemoteTarget "{}.pbt";\n'.format(SYSTEM_NAME))
 
 
-def run_bat(bat_path: str, log_path: str):
+def run_bat(bat_path: str, log_path: str, bat_type: str):
     i = 1
     max_loop = 3
     while i <= max_loop:
@@ -122,6 +124,10 @@ def run_bat(bat_path: str, log_path: str):
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True)
         i = i + 1
+
+        if bat_type == 'EXE':
+            with open(log_path, 'w+') as f:
+                f.write(cp.stdout)
 
         if 'Result Code -22.' in cp.stdout:
             try:
@@ -179,6 +185,8 @@ def change_pbr_relative_path():
 
     with open(file_path, 'w') as f:
         for i, line in enumerate(get_all, 0):
+            if line.strip() == '':
+                continue
             if replace in line:
                 replace_str = os.path.abspath(line)
             elif '.pbl' in line:
@@ -213,7 +221,7 @@ def get_project(config) -> dict:
 
         start = time.time()
         util.print_and_log(logger.info, '##### CHANGE PBR BASE PATH ######')
-        change_pbr_relative_path()
+        # change_pbr_relative_path()
         util.print_and_log(logger.info,
                            'Done changing PBR BASE PATH ({})'.format(util.format_time_exec(time.time() - start)))
 
@@ -257,7 +265,7 @@ def get_project(config) -> dict:
 
 def create_logger():
     try:
-        log_path = f'{BASE_SISTEMAS_PATH}\\{SYSTEM_NAME}_LOG'
+        log_path = util.get_logger_path()
         os.makedirs(log_path)
     except Exception as ex:
         print(ex)
@@ -301,6 +309,7 @@ def create_scripts(pbg_dict, config) -> dict:
     orca_dict['BAT_PATH'] = orca_helper.BAT_PATH
     orca_dict['BAT_EXE'] = orca_helper.BAT_EXE
     orca_dict['ORCA_LOG'] = orca_helper.ORCA_LOG_PATH
+    orca_dict['ORCA_EXE_LOG'] = orca_helper.ORCA_LOG_EXE_PATH
 
     return orca_dict
 
@@ -308,7 +317,7 @@ def create_scripts(pbg_dict, config) -> dict:
 def prepare_run_bat(orca_dict, config):
     start = time.time()
     try:
-        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'])
+        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'], '3STEP')
     except EnvironmentError as err:
         err_txt = '\tError executing 3 step bat, open pbw and correct errors : \n\t\t{}'.format(err)
         util.print_and_log(logger.info, err_txt)
@@ -320,19 +329,16 @@ def prepare_run_bat(orca_dict, config):
 
     util.print_and_log(logger.info, 'Done running 3step bat... ({})'.format(util.format_time_exec(time.time() - start)))
 
-    if config['CREATE_EXE'].upper() == 'S':
-        start = time.time()
-        util.print_and_log(logger.info, '##### CHANGE VGSVERSAO ######')
-        change_sra_version()
-        util.print_and_log(logger.info,
-                           'Done changing vgsVersao... ({})'.format(util.format_time_exec(time.time() - start)))
 
+def prepare_run_exe(orca_dict, config):
+    if config['CREATE_EXE'].upper() != 'S':
+        util.print_and_log(logger.info, 'Exe flag off...')
+        return
+    else:
         start = time.time()
         util.print_and_log(logger.info, '##### RUN EXE BAT ######')
         try:
-            run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_LOG'])
-
-            util.move_bin_files()
+            run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_EXE_LOG'], 'EXE')
         except EnvironmentError as err:
             err_txt = '\tError executing EXE bat, open pbw and correct errors - {}'.format(err)
             util.print_and_log(logger.info, err_txt)
@@ -344,6 +350,23 @@ def prepare_run_bat(orca_dict, config):
 
         util.print_and_log(logger.info,
                            'Done running exe bat... ({})'.format(util.format_time_exec(time.time() - start)))
+
+    start = time.time()
+    util.print_and_log(logger.info, '##### MOVING PBDs ######')
+    if DIST_FOLDER == "":
+        dist_folder = util.get_dist_path()
+    else:
+        dist_folder = DIST_FOLDER
+
+    try:
+        util.move_bin_files(base_path=BASE_SISTEMAS_PATH, new_dst=dist_folder)
+
+        util.print_and_log(logger.info,
+                           'Done moving pbds... ({})'.format(util.format_time_exec(time.time() - start)))
+    except Exception as err:
+        err_txt = '\tErrormoving files, correct errors - {}'.format(err)
+        util.print_and_log(logger.info, err_txt)
+        raise EnvironmentError(err_txt)
 
 
 def main():
@@ -393,6 +416,8 @@ def start_process(config) -> bool:
         orca_dict = create_scripts(pbg_dict, config)
 
         prepare_run_bat(orca_dict, config)
+
+        prepare_run_exe(orca_dict, config)
 
         delete_temp_files(config)
     except (FileNotFoundError, EnvironmentError, SyntaxError, ValueError) as ex:

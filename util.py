@@ -1,5 +1,8 @@
 import concurrent.futures
 import glob
+import shutil
+import re
+import datetime
 import json
 import logging
 import multiprocessing as mp
@@ -9,6 +12,60 @@ from io import TextIOWrapper
 from os import path
 
 import obj_worker
+
+
+def delete_build_folder():
+    build_path = get_build_path()
+    shutil.rmtree(build_path, ignore_errors=True)
+
+
+def get_build_path():
+    config = get_config()
+
+    base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
+    system_name = config['SYSTEM_NAME']
+
+    build_path = f'{base_path}\\BUILD_{system_name}'
+
+    return build_path
+
+
+def get_logger_path():
+    build_path = get_build_path()
+
+    log_path = os.path.join(build_path, 'LOGS')
+
+    return log_path
+
+
+def get_orca_path():
+    build_path = get_build_path()
+
+    dir = os.path.join(build_path, 'ORCA')
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+
+    return dir
+
+
+def get_dist_path():
+    build_path = get_build_path()
+
+    dir = os.path.join(build_path, 'DIST')
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+
+    return dir
+
+
+def get_dist_path():
+    build_path = get_build_path()
+
+    dir = os.path.join(build_path, 'DIST')
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+
+    return dir
 
 
 def set_read_only(file_path, set='-'):
@@ -73,7 +130,7 @@ def run_cmd_default(cmd: list):
         try:
             cp = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                check=True, timeout=10*i)
+                                check=True, timeout=10 * i)
             if cp.returncode == 0:
                 break
         except subprocess.TimeoutExpired as err:
@@ -168,7 +225,21 @@ def return_obj_path(base_path, base_filter) -> str:
         return srj_list[0]
 
 
-def return_properties_from_srj(srj_path) -> dict:
+def return_properties_srj(srj_path) -> dict:
+    srj_file = return_obj_path(srj_path, '*.srj')
+    lines = read_file(srj_file)
+    ret_dict = {}
+
+    for line in lines:
+        if re.match(r'\b[A-Z]{3}:', line):
+            splits = line.split(':')
+
+            ret_dict[splits[0]] = splits[1].strip()
+
+    return ret_dict
+
+
+def return_pbd_from_srj(srj_path) -> dict:
     srj_file = return_obj_path(srj_path, '*.srj')
 
     lines = read_file(srj_file)
@@ -205,11 +276,11 @@ def write_new_line(file: TextIOWrapper, text: str, qtd=1) -> str:
 
 def prepare_delete_files_filter(base_path, max_threads):
     path_full = f'{base_path}\\**\\*.*'
-    all_obj_list = list(set(glob.glob(path_full, recursive=True)) - set(glob.glob(path_full + 'pb*', recursive=True) +
-                                                                        glob.glob(path_full + 'sra', recursive=True) +
-                                                                        glob.glob(path_full + 'exe', recursive=True) +
-                                                                        glob.glob(path_full + 'log', recursive=True)
-                                                                        ))
+    log_path = f'{get_build_path()}\\**\\*.*'
+
+    all_obj_list = list(set(glob.glob(path_full, recursive=True)) -
+                        set(glob.glob(path_full + 'pb*', recursive=True)) -
+                        set(glob.glob(log_path, recursive=True)))
 
     obj_chunks = chunker_list(all_obj_list, max_threads)
 
@@ -249,13 +320,20 @@ def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
 
         for ret in result:
             if not ret:
-                raise ValueError('There was a error downloading a object.. see log for more info.')
+                raise ValueError('There was an error downloading a object.. see object log for more info...')
 
 
 def format_time_exec(total_time) -> str:
     return '{:.2f} min'.format(total_time / 60) if total_time > 60 else '{:.2f} sec'.format(total_time)
 
 
-def move_bin_files():
-    # TODO: move pbd and exe to bin folder
-    pass
+def move_bin_files(base_path, new_dst):
+    path_full = f'{base_path}\\*.*'
+    all_obj_list = list(set(glob.glob(path_full + 'pbd', recursive=True) +
+                            glob.glob(path_full + 'exe', recursive=True)))
+
+    try:
+        for file in all_obj_list:
+            shutil.move(file, new_dst)
+    except Exception as err:
+        raise err
