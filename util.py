@@ -162,7 +162,7 @@ def get_from_tfs(obj_path: str, config, validate=False) -> bool:
     if path.exists(obj_path) or not validate:
         return ret
     else:
-        raise FileNotFoundError(f'File {obj_path} do not exists.')
+        raise FileNotFoundError(f'File {obj_path} do not exists. {ret}')
 
 
 def change_cwd(cwd: str):
@@ -328,7 +328,7 @@ def format_time_exec(total_time) -> str:
 
 
 def move_bin_files(base_path, new_dst):
-    path_full = f'{base_path}\\*.*'
+    path_full = f'{base_path}\\**\\*.*'
     all_obj_list = list(set(glob.glob(path_full + 'pbd', recursive=True) +
                             glob.glob(path_full + 'exe', recursive=True)))
 

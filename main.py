@@ -53,7 +53,10 @@ def pbg_list_from_from_pbt(pbt_path: str, config, use_tfs=True) -> dict:
         pbl_rep = util.path_obj_from_line(pbl)
         if use_tfs:
             logger.info(f'\tGetting PBG {pbl_rep}')
-            util.get_from_tfs(pbl_rep, config)
+            try:
+                util.get_from_tfs(pbl_rep, config, True)
+            except FileNotFoundError:
+                raise
 
         abs_path = os.path.abspath(pbl_rep)
 
@@ -334,22 +337,28 @@ def prepare_run_exe(orca_dict, config):
     if config['CREATE_EXE'].upper() != 'S':
         util.print_and_log(logger.info, 'Exe flag off...')
         return
-    else:
-        start = time.time()
-        util.print_and_log(logger.info, '##### RUN EXE BAT ######')
-        try:
-            run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_EXE_LOG'], 'EXE')
-        except EnvironmentError as err:
-            err_txt = '\tError executing EXE bat, open pbw and correct errors - {}'.format(err)
-            util.print_and_log(logger.info, err_txt)
-            raise EnvironmentError(err_txt)
-        except SyntaxError as err:
-            err_txt = '\tError executing EXE bat, correct errors - {}'.format(err)
-            util.print_and_log(logger.info, err_txt)
-            raise EnvironmentError(err_txt)
 
-        util.print_and_log(logger.info,
-                           'Done running exe bat... ({})'.format(util.format_time_exec(time.time() - start)))
+    start = time.time()
+    util.print_and_log(logger.info, '##### RUN EXE BAT ######')
+    try:
+        run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_EXE_LOG'], 'EXE')
+    except EnvironmentError as err:
+        err_txt = '\tError executing EXE bat, open pbw and correct errors - {}'.format(err)
+        util.print_and_log(logger.info, err_txt)
+        raise EnvironmentError(err_txt)
+    except SyntaxError as err:
+        err_txt = '\tError executing EXE bat, correct errors - {}'.format(err)
+        util.print_and_log(logger.info, err_txt)
+        raise EnvironmentError(err_txt)
+
+    util.print_and_log(logger.info,
+                       'Done running exe bat... ({})'.format(util.format_time_exec(time.time() - start)))
+
+
+def prepare_move_dist(config):
+    if config['CREATE_EXE'].upper() != 'S':
+        util.print_and_log(logger.info, 'Exe flag off...')
+        return
 
     start = time.time()
     util.print_and_log(logger.info, '##### MOVING PBDs ######')
@@ -359,12 +368,12 @@ def prepare_run_exe(orca_dict, config):
         dist_folder = DIST_FOLDER
 
     try:
-        util.move_bin_files(base_path=BASE_SISTEMAS_PATH, new_dst=dist_folder)
+        util.move_bin_files(base_path=SYSTEM_DIR, new_dst=dist_folder)
 
         util.print_and_log(logger.info,
                            'Done moving pbds... ({})'.format(util.format_time_exec(time.time() - start)))
     except Exception as err:
-        err_txt = '\tErrormoving files, correct errors - {}'.format(err)
+        err_txt = '\tError moving files, correct errors - {}'.format(err)
         util.print_and_log(logger.info, err_txt)
         raise EnvironmentError(err_txt)
 
@@ -418,6 +427,8 @@ def start_process(config) -> bool:
         prepare_run_bat(orca_dict, config)
 
         prepare_run_exe(orca_dict, config)
+
+        prepare_move_dist(config)
 
         delete_temp_files(config)
     except (FileNotFoundError, EnvironmentError, SyntaxError, ValueError) as ex:
