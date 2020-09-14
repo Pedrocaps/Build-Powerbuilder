@@ -14,11 +14,10 @@
   "GET_HELP_FILE": "S",
   "CREATE_EXE": "S",
   "USE_SRJ": "S",
-  "DELETE_TEMP_FILES": "N",
+  "DELETE_TEMP_FILES": "S",
 
   "COMPLEMENTOS_PATH": "",
   "MAX_THREADS":"10",
-  "MAX_BAT_EXEC": 3,
   "PBORCA": {
     "BAT_3STEP": "3Step_{}.bat",
     "BAT_BUILD_EXE": "build_exe_{}.bat",
