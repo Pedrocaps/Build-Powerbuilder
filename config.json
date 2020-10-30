@@ -1,8 +1,8 @@
 {
-  "CHANGE_BASE_CWD": "[BASE FOLDER WHERE YOUR PROJECTS WILL BE]",
-  "BASE_DIR": "[NAME OF THE PROJECT]",
-  "SYSTEM_PATH": "[WHERE YOUR PBT ARE]",
-  "SYSTEM_NAME": "[NAME OF UR SYSTEM, MUST BE SAME AS PBT]",
+  "CHANGE_BASE_CWD": "C:\\Users\\plc2\\Desktop\\Orca",
+  "BASE_DIR": "EnergisaTrunk",
+  "SYSTEM_NAME": "segodsco",
+  "SYSTEM_PATH": "\\Sistemas\\TECCOM\\SYSTEM_NAME\\Fontes",
   "DIST_FOLDER": "",
 
   "SYSTEM_DESC": "",
@@ -17,7 +17,7 @@
   "DELETE_TEMP_FILES": "S",
 
   "COMPLEMENTOS_PATH": "",
-  "MAX_THREADS":"10",
+  "MAX_THREADS":"9",
   "PBORCA": {
     "BAT_3STEP": "3Step_{}.bat",
     "BAT_BUILD_EXE": "build_exe_{}.bat",

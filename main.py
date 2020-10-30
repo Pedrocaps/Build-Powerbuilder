@@ -133,12 +133,13 @@ def run_bat(bat_path: str, log_path: str, bat_type: str):
                 f.write(cp.stdout)
 
         if 'Result Code -22.' in cp.stdout:
+            if i <= max_loop:
+                continue
             try:
                 errors_txt = util.get_error_from_orca_log(log_path)
                 raise SyntaxError(f'Syntax Errors: {errors_txt}')
             except Exception as err:
                 raise EnvironmentError('Reading log error: {}'.format(err))
-            pass
         if 'Result Code -27' in cp.stdout:
             raise EnvironmentError('Target file not found:')
         if 'Result Code -6' in cp.stdout:
@@ -148,7 +149,7 @@ def run_bat(bat_path: str, log_path: str, bat_type: str):
         if 'End Session' in cp.stdout:
             return  # sucess
 
-    raise EnvironmentError(f'Error running 3step bat: i = {i}')
+    raise EnvironmentError(f'Error running `{bat_type}` bat: i = {i}')
 
 
 def change_sra_version():
