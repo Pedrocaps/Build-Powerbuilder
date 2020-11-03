@@ -71,10 +71,7 @@ def obj_list_from_pbg(pbg):
 def get_obj_from_list(obj_list: list):
     config = util.get_config()
 
-    base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
-    system_name = config['SYSTEM_NAME']
-
-    log_path = f'{base_path}\\{system_name}_LOG'
+    log_path = util.get_logger_path()
     thread_name = uuid.uuid1().hex
     log_path = '{}\\{}.log'.format(log_path, thread_name)
     logger = util.return_log_object(log_filename=log_path, log_name=thread_name, when=None)
@@ -89,7 +86,7 @@ def get_obj_from_list(obj_list: list):
             logger.info(f'\t\t{ret} ...')
         except FileNotFoundError as err:
             logger.info(f'\t\tError getting obj : {err}')
-            return False
+            continue
         except TimeoutError as err:
             logger.info(f'\t\tTimeout getting obj : {err}')
             return False
@@ -99,12 +96,8 @@ def get_obj_from_list(obj_list: list):
 
 
 def delete_files_filter(files_path_list):
-    config = util.get_config()
+    log_path = util.get_logger_path()
 
-    base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
-    system_name = config['SYSTEM_NAME']
-
-    log_path = f'{base_path}\\{system_name}_LOG'
     thread_name = uuid.uuid1().hex
     log_path = '{}\\delete_{}.log'.format(log_path, thread_name)
     logger = util.return_log_object(log_filename=log_path, log_name=thread_name, when=None)
