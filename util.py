@@ -280,6 +280,7 @@ def prepare_delete_files_filter(base_path, max_threads):
 
     all_obj_list = list(set(glob.glob(path_full, recursive=True)) -
                         set(glob.glob(path_full + 'pb*', recursive=True)) -
+                        set(glob.glob(path_full + 'exe', recursive=True)) -
                         set(glob.glob(log_path, recursive=True)))
 
     obj_chunks = chunker_list(all_obj_list, max_threads)
@@ -329,6 +330,7 @@ def format_time_exec(total_time) -> str:
 
 def move_bin_files(base_path, new_dst):
     path_full = f'{base_path}\\**\\*.*'
+    # pasta dp sistema que busca as pbd
     all_obj_list = list(set(glob.glob(path_full + 'pbd', recursive=True) +
                             glob.glob(path_full + 'exe', recursive=True)))
 

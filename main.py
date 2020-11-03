@@ -99,6 +99,8 @@ def set_globals(config: dict):
     PBT_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbt'.format(SYSTEM_NAME))
     global PBW_PATH
     PBW_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbw'.format(SYSTEM_NAME))
+    global SYSTEM_BIN_FILES
+    SYSTEM_BIN_FILES = '{}\\{}'.format(BASE_PATH, SYSTEM_DIR)
 
     global VERSAO
     VERSAO = config['VERSAO']
@@ -203,8 +205,12 @@ def change_pbr_relative_path():
     util.set_read_only(file_path, '+')
 
 
-def get_project(config) -> dict:
+def get_project(config, use_tfs=True) -> dict:
     try:
+        if not use_tfs:
+            pbg_dict = pbg_list_from_from_pbt(PBT_PATH, config, use_tfs)
+            return pbg_dict
+
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBT ######')
         get_pbt(PBT_PATH, config)
@@ -231,7 +237,7 @@ def get_project(config) -> dict:
 
         start = time.time()
         util.print_and_log(logger.info, '##### GET PBG ######')
-        pbg_dict = pbg_list_from_from_pbt(PBT_PATH, config)
+        pbg_dict = pbg_list_from_from_pbt(PBT_PATH, config, use_tfs)
         pbg_list = pbg_dict['ALL']
         util.print_and_log(logger.info, 'Done getting PBG(D)s...'.format(util.format_time_exec(time.time() - start)))
 
@@ -369,7 +375,7 @@ def prepare_move_dist(config):
         dist_folder = DIST_FOLDER
 
     try:
-        util.move_bin_files(base_path=SYSTEM_DIR, new_dst=dist_folder)
+        util.move_bin_files(base_path=SYSTEM_BIN_FILES, new_dst=dist_folder)
 
         util.print_and_log(logger.info,
                            'Done moving pbds... ({})'.format(util.format_time_exec(time.time() - start)))
@@ -421,7 +427,7 @@ def start_process(config) -> bool:
     """
 
     try:
-        pbg_dict = get_project(config)
+        pbg_dict = get_project(config, use_tfs=True)
 
         orca_dict = create_scripts(pbg_dict, config)
 
