@@ -75,9 +75,6 @@ def set_globals(config: dict):
     global MAX_THREADS
     MAX_THREADS = int(config['MAX_THREADS'])
 
-    global TFS_BASE_DIR
-    TFS_BASE_DIR = config['TFS_BASE_DIR']
-
     global BASE_PATH
     BASE_PATH = config['CHANGE_BASE_CWD']
 
@@ -93,8 +90,6 @@ def set_globals(config: dict):
     global DIST_FOLDER
     DIST_FOLDER = config['DIST_FOLDER']
 
-    global GET_TFS_DEFAULT
-    GET_TFS_DEFAULT = config['GET_TFS_DEFAULT']
     global PBT_PATH
     PBT_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbt'.format(SYSTEM_NAME))
     global PBW_PATH

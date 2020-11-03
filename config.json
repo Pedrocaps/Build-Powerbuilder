@@ -1,13 +1,12 @@
 {
   "CHANGE_BASE_CWD": "C:\\Users\\plc2\\Desktop\\Orca",
   "BASE_DIR": "EnergisaTrunk",
-  "SYSTEM_NAME": "segoditg",
+  "SYSTEM_NAME": "segodsco",
   "SYSTEM_PATH": "\\Sistemas\\TECCOM\\SYSTEM_NAME\\Fontes",
-  "DIST_FOLDER": "",
+  "MAX_THREADS":"9",
 
+  "DIST_FOLDER": "",
   "SYSTEM_DESC": "",
-  "TFS_BASE_DIR": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe",
-  "GET_TFS_DEFAULT": "get {} /force  /recursive",
   "VERSAO": "099991000",
   "FIGURAS_PATH": "\\\\fileserver.scl.corp\\BibAppl\\Figuras\\",
   "ICO_PATH": "",
@@ -15,9 +14,12 @@
   "CREATE_EXE": "S",
   "USE_SRJ": "S",
   "DELETE_TEMP_FILES": "S",
-
   "COMPLEMENTOS_PATH": "",
-  "MAX_THREADS":"9",
+
+  "TEAM_FOUDATION": {
+    "TFS_PATH" : "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer\\TF.exe",
+    "PAR_LIST": ["get", "{}", "/force", "/recursive"]
+  },
   "PBORCA": {
     "BAT_3STEP": "3Step_{}.bat",
     "BAT_BUILD_EXE": "build_exe_{}.bat",

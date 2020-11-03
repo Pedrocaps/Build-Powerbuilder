@@ -58,16 +58,6 @@ def get_dist_path():
     return dir
 
 
-def get_dist_path():
-    build_path = get_build_path()
-
-    dir = os.path.join(build_path, 'DIST')
-    if not os.path.exists(dir):
-        os.mkdir(dir)
-
-    return dir
-
-
 def set_read_only(file_path, set='-'):
     cmd1 = 'attrib'
     cmd2 = f'{set}R'  # - remove read only + add readonly
@@ -146,14 +136,17 @@ def run_cmd_default(cmd: list):
 
 
 def get_from_tfs(obj_path: str, config, validate=False) -> bool:
-    par0 = config['TFS_BASE_DIR']
-    par1 = 'get'
-    par2 = obj_path
-    par3 = '/force'
-    par4 = '/recursive'
+    tfs_par = config['TEAM_FOUDATION']
+
+    tfs_path = tfs_par['TFS_PATH']
+    tfs_par_list = tfs_par['PAR_LIST'].copy()
+    tfs_par_list[1] = tfs_par_list[1].format(obj_path)
+
+    par_list = [tfs_path]
+    par_list.extend(tfs_par_list)
 
     try:
-        ret = run_cmd_default([par0, par1, par2, par3, par4])
+        ret = run_cmd_default(par_list)
     except TimeoutError as err:
         raise err
     except EnvironmentError as err:
