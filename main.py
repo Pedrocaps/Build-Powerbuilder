@@ -422,8 +422,7 @@ def start_process(config) -> bool:
     """
 
     try:
-        # pbg_dict = get_project(config, use_tfs=True)
-        pbg_dict = get_project(config, use_tfs=False)
+        pbg_dict = get_project(config, use_tfs=True)
 
         orca_dict = create_scripts(pbg_dict, config)
 
