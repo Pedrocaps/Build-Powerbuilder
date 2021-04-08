@@ -218,8 +218,20 @@ def return_obj_path(base_path, base_filter) -> str:
         return srj_list[0]
 
 
-def return_properties_srj(srj_path) -> dict:
-    srj_file = return_obj_path(srj_path, '*.srj')
+def get_srj_from_path(srj_path, system_name):
+    try:
+        srj_file = return_obj_path(srj_path, f'{system_name}.srj')
+    except FileNotFoundError:
+        srj_file = return_obj_path(srj_path, '*.srj')
+    return srj_file
+
+
+def return_properties_srj(srj_path, system_name) -> dict:
+    try:
+        srj_file = get_srj_from_path(srj_path, system_name)
+    except FileNotFoundError:
+        raise
+
     lines = read_file(srj_file)
     ret_dict = {}
 
@@ -232,9 +244,11 @@ def return_properties_srj(srj_path) -> dict:
     return ret_dict
 
 
-def return_pbd_from_srj(srj_path) -> dict:
-    srj_file = return_obj_path(srj_path, '*.srj')
-
+def return_pbd_from_srj(srj_path, system_name) -> dict:
+    try:
+        srj_file = get_srj_from_path(srj_path, system_name)
+    except FileNotFoundError:
+        raise
     lines = read_file(srj_file)
     pbd_dict = {}
     for line in lines:
