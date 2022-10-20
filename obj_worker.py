@@ -43,7 +43,10 @@ def obj_list_from_pbg(pbg):
             line = line.strip()
             if line[0] != ' ':
                 line = ' ' + line
+            line = line.replace('\\ ', '')
             splits = line.split(' ')
+            # splits = [s for s in splits if s.strip() != '']
+
             ini = 1 if splits[-1].rfind('\\\\') == -1 else splits[-1].rfind('\\\\') + 2
             fim = -2
             pbl_obj = splits[-1].strip()[ini:fim]
