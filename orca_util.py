@@ -26,6 +26,7 @@ class OrcaUtil:
         self.LOGGER = logger
         self.SYSTEM_DESC = config['SYSTEM_DESC']
         self.USE_SRJ = str(config['USE_SRJ']).upper() == 'S'
+        self.create_exe = config['CREATE_EXE'].upper() == 'S'
 
         build_path = get_orca_path()
         orca_log_path = get_logger_path()
@@ -49,6 +50,10 @@ class OrcaUtil:
         print_and_log(self.LOGGER.info, '\tCREATE 3STEP SCRIPT')
         self.create_3step_script()
         print_and_log(self.LOGGER.info, '\tDone create 3step scripts...')
+
+        if not self.create_exe :
+            print_and_log(self.LOGGER.info, 'Exe flag off...')
+            return
 
         print_and_log(self.LOGGER.info, '\tCREATE EXE SCRIPT')
         self.create_pborca_exe_script()

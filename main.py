@@ -115,9 +115,9 @@ def create_pbw(pbw_path: str):
         f.write('DefaultRemoteTarget "{}.pbt";\n'.format(SYSTEM_NAME))
 
 
-def run_bat(bat_path: str, log_path: str, bat_type: str):
+def run_bat(bat_path: str, log_path: str, bat_type: str, max_loop_config):
     i = 1
-    max_loop = 3
+    max_loop = max_loop_config
     while i <= max_loop:
         util.print_and_log(logger.info, '\tRunning {} of {} bat executions'.format(i, max_loop))
         util.print_and_log(logger.info, '\t\t see {} for details '.format(log_path))
@@ -322,7 +322,8 @@ def create_scripts(pbg_dict, config) -> dict:
 def prepare_run_bat(orca_dict, config):
     start = time.time()
     try:
-        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'], '3STEP')
+        max_loop = config['MAX_LOOPS']
+        run_bat(orca_dict['BAT_PATH'], orca_dict['ORCA_LOG'], '3STEP', max_loop)
     except EnvironmentError as err:
         err_txt = '\tError executing 3 step bat, open pbw and correct errors : \n\t\t{}'.format(err)
         util.print_and_log(logger.info, err_txt)
@@ -336,6 +337,7 @@ def prepare_run_bat(orca_dict, config):
 
 
 def prepare_run_exe(orca_dict, config):
+    max_loop = config['MAX_LOOPS']
     if config['CREATE_EXE'].upper() != 'S':
         util.print_and_log(logger.info, 'Exe flag off...')
         return
@@ -343,7 +345,7 @@ def prepare_run_exe(orca_dict, config):
     start = time.time()
     util.print_and_log(logger.info, '##### RUN EXE BAT ######')
     try:
-        run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_EXE_LOG'], 'EXE')
+        run_bat(orca_dict['BAT_EXE'], orca_dict['ORCA_EXE_LOG'], 'EXE', max_loop)
     except EnvironmentError as err:
         err_txt = '\tError executing EXE bat, open pbw and correct errors - {}'.format(err)
         util.print_and_log(logger.info, err_txt)
