@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 import subprocess
 import time
@@ -393,6 +394,14 @@ def main():
         start = time.time()
 
         config = util.get_config()
+        validation_logger = logging.getLogger('config_validation')
+        if not validation_logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            validation_logger.addHandler(handler)
+        validation_logger.setLevel(logging.INFO)
+        util.validate_config(config, validation_logger)
         set_globals(config)
         util.change_cwd(BASE_PATH)
     except Exception as err:
