@@ -412,18 +412,27 @@ def prepare_get_obj_from_pbg_process(pbgs: list):
 
 
 def prepare_get_obj_from_pbg_thread(pbgs: list, max_threads):
-    all_obj_list = []
-    for pbg in pbgs:
-        obj_list = obj_worker.obj_list_from_pbg(pbg)
-        if obj_list:
-            all_obj_list.extend(obj_list)
-
-    obj_chunks = chunker_list(all_obj_list, max_threads)
+    chunk_size = 500
+    buffer = []
+    futures = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-        result = executor.map(obj_worker.get_obj_from_list, obj_chunks)
+        for pbg in pbgs:
+            obj_list = obj_worker.obj_list_from_pbg(pbg)
+            if not obj_list:
+                continue
 
-        for ret in result:
+            buffer.extend(obj_list)
+            while len(buffer) >= chunk_size:
+                chunk = buffer[:chunk_size]
+                del buffer[:chunk_size]
+                futures.append(executor.submit(obj_worker.get_obj_from_list, chunk))
+
+        if buffer:
+            futures.append(executor.submit(obj_worker.get_obj_from_list, buffer))
+
+        for future in concurrent.futures.as_completed(futures):
+            ret = future.result()
             if not ret:
                 raise ValueError('There was an error downloading a object.. see object log for more info...')
 
