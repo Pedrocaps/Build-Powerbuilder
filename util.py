@@ -22,10 +22,10 @@ def delete_build_folder():
 def get_build_path():
     config = get_config()
 
-    base_path = f"{config['CHANGE_BASE_CWD']}\\{config['BASE_DIR']}"
+    base_path = os.path.join(config['CHANGE_BASE_CWD'], config['BASE_DIR'])
     system_name = config['SYSTEM_NAME']
 
-    build_path = f'{base_path}\\BUILD_{system_name}'
+    build_path = os.path.join(base_path, f'BUILD_{system_name}')
 
     return build_path
 
@@ -305,7 +305,7 @@ def return_log_object(log_filename, log_name, when='MIDNIGHT', level=logging.INF
 
 def return_obj_path(base_path, base_filter) -> str:
     srj_list = []
-    obj_path = f'{base_path}\\{base_filter}'
+    obj_path = os.path.join(base_path, base_filter)
     for file in glob.glob(obj_path):
         srj_list.append(file)
 
@@ -379,8 +379,8 @@ def write_new_line(file: TextIOWrapper, text: str, qtd=1) -> str:
 
 
 def prepare_delete_files_filter(base_path, max_threads):
-    path_full = f'{base_path}\\**\\*.*'
-    log_path = f'{get_build_path()}\\**\\*.*'
+    path_full = os.path.join(base_path, '**', '*.*')
+    log_path = os.path.join(get_build_path(), '**', '*.*')
 
     all_obj_list = list(set(glob.glob(path_full, recursive=True)) -
                         set(glob.glob(path_full + 'pb*', recursive=True)) -
@@ -433,7 +433,7 @@ def format_time_exec(total_time) -> str:
 
 
 def move_bin_files(base_path, new_dst):
-    path_full = f'{base_path}\\**\\*.*'
+    path_full = os.path.join(base_path, '**', '*.*')
     # pasta dp sistema que busca as pbd
     all_obj_list = list(set(glob.glob(path_full + 'pbd', recursive=True) +
                             glob.glob(path_full + 'exe', recursive=True)))
