@@ -80,6 +80,65 @@ def get_config() -> dict:
     return data
 
 
+def validate_config(config: dict, logger: logging.Logger) -> None:
+    required_keys = {
+        'CHANGE_BASE_CWD': str,
+        'BASE_DIR': str,
+        'SYSTEM_NAME': str,
+        'SYSTEM_PATH': str,
+        'TEAM_FOUDATION': dict,
+        'PBORCA': dict,
+        'MAX_THREADS': (int, str),
+        'MAX_LOOPS': (int, str),
+    }
+
+    errors = []
+
+    for key, expected_type in required_keys.items():
+        if key not in config:
+            errors.append(f'Missing required config key: {key}')
+            continue
+        if not isinstance(config[key], expected_type):
+            errors.append(f'Invalid type for {key}: expected {expected_type}, got {type(config[key])}')
+
+    if isinstance(config.get('MAX_THREADS'), str) and not config['MAX_THREADS'].isdigit():
+        errors.append('MAX_THREADS must be an integer or numeric string')
+    if isinstance(config.get('MAX_LOOPS'), str) and not str(config['MAX_LOOPS']).isdigit():
+        errors.append('MAX_LOOPS must be an integer or numeric string')
+
+    team_foundation = config.get('TEAM_FOUDATION', {})
+    if not isinstance(team_foundation, dict):
+        errors.append('TEAM_FOUDATION must be a dict')
+    elif 'TFS_PATH' not in team_foundation or not isinstance(team_foundation.get('TFS_PATH'), str):
+        errors.append('TEAM_FOUDATION.TFS_PATH is required and must be a string')
+
+    pborca = config.get('PBORCA', {})
+    if not isinstance(pborca, dict):
+        errors.append('PBORCA must be a dict')
+    elif 'ORCA_EXE' not in pborca or not isinstance(pborca.get('ORCA_EXE'), str):
+        errors.append('PBORCA.ORCA_EXE is required and must be a string')
+
+    if errors:
+        for error in errors:
+            logger.error(error)
+        raise ValueError('Invalid configuration. Fix the errors above and retry.')
+
+    system_dir = f"{config['BASE_DIR']}{config['SYSTEM_PATH'].replace('SYSTEM_NAME', config['SYSTEM_NAME'])}"
+    system_dir_full = os.path.join(config['CHANGE_BASE_CWD'], system_dir)
+
+    path_checks = {
+        'CHANGE_BASE_CWD': config['CHANGE_BASE_CWD'],
+        'PBORCA.ORCA_EXE': pborca['ORCA_EXE'],
+        'TEAM_FOUDATION.TFS_PATH': team_foundation['TFS_PATH'],
+        'SYSTEM_DIR': system_dir_full,
+    }
+
+    for name, value in path_checks.items():
+        if not os.path.exists(value):
+            logger.error(f'Path not found for {name}: {value}')
+            raise FileNotFoundError(f'Path not found for {name}: {value}')
+
+
 def read_file(base_path: str, encoding='') -> TextIOWrapper:
     if encoding:
         file = open(base_path, 'r', encoding=encoding)
