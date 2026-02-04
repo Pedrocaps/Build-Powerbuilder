@@ -19,8 +19,8 @@ def get_pbt(pbt_path, config):
 
 
 def get_pbr(config) -> str:
-    base_path = f'{BASE_PATH}\\{SYSTEM_DIR}'
-    pbr_path = '{}\\{}'.format(base_path, '*.pbr'.format(SYSTEM_NAME))
+    base_path = os.path.join(BASE_PATH, SYSTEM_DIR)
+    pbr_path = os.path.join(base_path, '*.pbr'.format(SYSTEM_NAME))
 
     util.get_from_tfs(pbr_path, config, False)
 
@@ -49,7 +49,7 @@ def pbg_list_from_from_pbt(pbt_path: str, config, use_tfs=True) -> dict:
         if splits[0] == 'LibList':
             pbls = splits[1].split(';')[:-1]
 
-    util.change_cwd('{}\\{}'.format(BASE_PATH, SYSTEM_DIR))
+    util.change_cwd(os.path.join(BASE_PATH, SYSTEM_DIR))
     for pbl in pbls:
         pbl_rep = util.path_obj_from_line(pbl)
         if use_tfs:
@@ -86,17 +86,17 @@ def set_globals(config: dict):
     SYSTEM_DIR = config['BASE_DIR'] + config['SYSTEM_PATH'].replace('SYSTEM_NAME', SYSTEM_NAME)
 
     global BASE_SISTEMAS_PATH
-    BASE_SISTEMAS_PATH = f"{BASE_PATH}\\{config['BASE_DIR']}"
+    BASE_SISTEMAS_PATH = os.path.join(BASE_PATH, config['BASE_DIR'])
 
     global DIST_FOLDER
     DIST_FOLDER = config['DIST_FOLDER']
 
     global PBT_PATH
-    PBT_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbt'.format(SYSTEM_NAME))
+    PBT_PATH = os.path.join(BASE_PATH, SYSTEM_DIR, f'{SYSTEM_NAME}.pbt')
     global PBW_PATH
-    PBW_PATH = '{}\\{}\\{}'.format(BASE_PATH, SYSTEM_DIR, '{}.pbw'.format(SYSTEM_NAME))
+    PBW_PATH = os.path.join(BASE_PATH, SYSTEM_DIR, f'{SYSTEM_NAME}.pbw')
     global SYSTEM_BIN_FILES
-    SYSTEM_BIN_FILES = '{}\\{}'.format(BASE_PATH, SYSTEM_DIR)
+    SYSTEM_BIN_FILES = os.path.join(BASE_PATH, SYSTEM_DIR)
 
     global VERSAO
     VERSAO = config['VERSAO']
@@ -195,8 +195,8 @@ def run_bat(bat_path: str, log_path: str, bat_type: str, max_loop_config):
 
 
 def change_sra_version():
-    base_path = f'{BASE_PATH}\\{SYSTEM_DIR}'
-    sra_path = f'{base_path}\\{SYSTEM_NAME}.sra'
+    base_path = os.path.join(BASE_PATH, SYSTEM_DIR)
+    sra_path = os.path.join(base_path, f'{SYSTEM_NAME}.sra')
     file_path = f'{sra_path}'
 
     util.set_read_only(file_path)
@@ -216,8 +216,8 @@ def change_sra_version():
 
 
 def change_pbr_relative_path():
-    base_path = f'{BASE_PATH}\\{SYSTEM_DIR}'
-    sra_path = f'{base_path}\\{SYSTEM_NAME}.pbr'
+    base_path = os.path.join(BASE_PATH, SYSTEM_DIR)
+    sra_path = os.path.join(base_path, f'{SYSTEM_NAME}.pbr')
     file_path = f'{sra_path}'
 
     util.change_cwd(base_path)
@@ -320,7 +320,7 @@ def create_logger():
     except Exception as ex:
         print(ex)
     finally:
-        log_path = '{}\\GERAL.log'.format(log_path)
+        log_path = os.path.join(log_path, 'GERAL.log')
 
     try:
         global logger

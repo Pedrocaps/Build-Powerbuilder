@@ -10,16 +10,16 @@ class OrcaUtil:
         self.BASE_PATH = config['CHANGE_BASE_CWD']
         self.BASE_DIR = config['BASE_DIR']
         self.SYSTEM_DIR = config['BASE_DIR'] + config['SYSTEM_PATH'].replace('SYSTEM_NAME', self.SYSTEM_NAME)
-        self.SYSTEM_DIR = '{}\\{}'.format(self.BASE_PATH, self.SYSTEM_DIR)
+        self.SYSTEM_DIR = os.path.join(self.BASE_PATH, self.SYSTEM_DIR)
 
         self.ICO_PATH = config['ICO_PATH']
 
-        self.PBT_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbt'.format(self.SYSTEM_NAME))
-        self.PBR_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbr'.format(self.SYSTEM_NAME))
-        self.PBL_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.pbl'.format(self.SYSTEM_NAME))
-        self.EXE_PATH = '{}\\{}'.format(self.SYSTEM_DIR, '{}.exe'.format(self.SYSTEM_NAME))
+        self.PBT_PATH = os.path.join(self.SYSTEM_DIR, f'{self.SYSTEM_NAME}.pbt')
+        self.PBR_PATH = os.path.join(self.SYSTEM_DIR, f'{self.SYSTEM_NAME}.pbr')
+        self.PBL_PATH = os.path.join(self.SYSTEM_DIR, f'{self.SYSTEM_NAME}.pbl')
+        self.EXE_PATH = os.path.join(self.SYSTEM_DIR, f'{self.SYSTEM_NAME}.exe')
 
-        self.BASE_SISTEMAS_PATH = f"{self.BASE_PATH}\\{config['BASE_DIR']}"
+        self.BASE_SISTEMAS_PATH = os.path.join(self.BASE_PATH, config['BASE_DIR'])
         self.CONFIG_ORCA = config['PBORCA']
         self.VERSAO = config['VERSAO']
         self.PBD_LIST = pbd_list
@@ -34,17 +34,17 @@ class OrcaUtil:
         bat_3step = self.CONFIG_ORCA['BAT_3STEP'].format(self.SYSTEM_NAME)
         dat_3step = self.CONFIG_ORCA['ORCA_3STEP_DAT'].format(self.SYSTEM_NAME)
 
-        self.BAT_PATH = f"{build_path}\\{bat_3step}"
-        self.DAT_PATH = f"{build_path}\\{dat_3step}"
+        self.BAT_PATH = os.path.join(build_path, bat_3step)
+        self.DAT_PATH = os.path.join(build_path, dat_3step)
 
         bat_exe = self.CONFIG_ORCA['BAT_BUILD_EXE'].format(self.SYSTEM_NAME)
         dat_exe = self.CONFIG_ORCA['ORCA_EXE_DAT'].format(self.SYSTEM_NAME)
 
-        self.BAT_EXE = f"{build_path}\\{bat_exe}"
-        self.DAT_EXE = f"{build_path}\\{dat_exe}"
+        self.BAT_EXE = os.path.join(build_path, bat_exe)
+        self.DAT_EXE = os.path.join(build_path, dat_exe)
 
-        self.ORCA_LOG_PATH = '{}\\3step.log'.format(orca_log_path)
-        self.ORCA_LOG_EXE_PATH = '{}\\exe_orca_log.log'.format(orca_log_path)
+        self.ORCA_LOG_PATH = os.path.join(orca_log_path, '3step.log')
+        self.ORCA_LOG_EXE_PATH = os.path.join(orca_log_path, 'exe_orca_log.log')
 
     def create_pborca_scripts(self):
         print_and_log(self.LOGGER.info, '\tCREATE 3STEP SCRIPT')
