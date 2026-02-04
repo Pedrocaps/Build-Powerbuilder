@@ -179,19 +179,57 @@ def run_cmd_default(cmd: list):
         try:
             cp = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                check=True, timeout=10 * i)
+                                check=False, timeout=10 * i)
+            cmd_log_path = write_cmd_log(
+                get_logger_path(),
+                'cmd',
+                cmd,
+                cp.stdout,
+                cp.stderr,
+                cp.returncode
+            )
             if cp.returncode == 0:
                 break
+            raise EnvironmentError(
+                f'Command failed with return code {cp.returncode}. '
+                f'Log: {cmd_log_path}. Stderr: {summarize_stderr(cp.stderr)}'
+            )
         except subprocess.TimeoutExpired as err:
             error_msg = f'Timeout after {i} tries. {err}'
             continue
-        except subprocess.CalledProcessError as err:
-            raise EnvironmentError(err.stderr)
 
     if error_msg != '':
         raise TimeoutError(error_msg)
 
     return cp.stdout.strip().replace('\n', '-')
+
+
+def summarize_stderr(stderr: str, limit: int = 300) -> str:
+    if not stderr:
+        return 'sem stderr'
+    summary = stderr.strip().replace('\n', ' | ')
+    if len(summary) > limit:
+        return f'{summary[:limit]}...'
+    return summary
+
+
+def write_cmd_log(log_dir: str, prefix: str, cmd: list, stdout: str, stderr: str, returncode: int) -> str:
+    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    safe_log_dir = log_dir
+    try:
+        os.makedirs(safe_log_dir, exist_ok=True)
+    except OSError:
+        safe_log_dir = os.getcwd()
+    log_path = os.path.join(safe_log_dir, f'{prefix}_{timestamp}.log')
+    try:
+        with open(log_path, 'w', encoding='utf-8') as log_file:
+            log_file.write(f'[{timestamp}] Command: {" ".join(cmd)}\n')
+            log_file.write(f'[{timestamp}] Return code: {returncode}\n')
+            log_file.write(f'[{timestamp}] STDOUT:\n{stdout or ""}\n')
+            log_file.write(f'[{timestamp}] STDERR:\n{stderr or ""}\n')
+    except OSError:
+        pass
+    return log_path
 
 
 def get_from_tfs(obj_path: str, config, validate=False) -> bool:

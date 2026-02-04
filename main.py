@@ -123,31 +123,75 @@ def run_bat(bat_path: str, log_path: str, bat_type: str, max_loop_config):
         util.print_and_log(logger.info, '\tRunning {} of {} bat executions'.format(i, max_loop))
         util.print_and_log(logger.info, '\t\t see {} for details '.format(log_path))
         cp = subprocess.run([bat_path], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            check=True)
+                            check=False)
+        cmd_log_path = util.write_cmd_log(
+            os.path.dirname(log_path) or os.getcwd(),
+            f'{bat_type.lower()}_bat',
+            [bat_path],
+            cp.stdout,
+            cp.stderr,
+            cp.returncode
+        )
         i = i + 1
 
         if bat_type == 'EXE':
             with open(log_path, 'w+') as f:
                 f.write(cp.stdout)
 
+        stderr_summary = util.summarize_stderr(cp.stderr)
+        has_result_code = 'Result Code' in cp.stdout
         if 'Result Code -22.' in cp.stdout:
             if i <= max_loop:
                 continue
             try:
                 errors_txt = util.get_error_from_orca_log(log_path)
-                raise SyntaxError(f'Syntax Errors: {errors_txt}')
+                raise SyntaxError(
+                    f'Syntax Errors: {errors_txt} | Log: {log_path} | '
+                    f'Command log: {cmd_log_path} | Return code: {cp.returncode} | Stderr: {stderr_summary}'
+                )
             except Exception as err:
-                raise EnvironmentError('Reading log error: {}'.format(err))
+                raise EnvironmentError(
+                    'Reading log error: {} | Log: {} | Command log: {} | Return code: {} | Stderr: {}'.format(
+                        err, log_path, cmd_log_path, cp.returncode, stderr_summary
+                    )
+                )
         if 'Result Code -27' in cp.stdout:
-            raise EnvironmentError('Target file not found:')
+            raise EnvironmentError(
+                f'Target file not found. Log: {log_path} | Command log: {cmd_log_path} | '
+                f'Return code: {cp.returncode} | Stderr: {stderr_summary}'
+            )
         if 'Result Code -6' in cp.stdout:
-            raise EnvironmentError('Target file not found in path: set application')
+            raise EnvironmentError(
+                f'Target file not found in path: set application. Log: {log_path} | '
+                f'Command log: {cmd_log_path} | Return code: {cp.returncode} | Stderr: {stderr_summary}'
+            )
         if 'Last Command Failed.' in cp.stdout:
-            raise EnvironmentError('Error building exe')
+            raise EnvironmentError(
+                f'Error building exe. Log: {log_path} | Command log: {cmd_log_path} | '
+                f'Return code: {cp.returncode} | Stderr: {stderr_summary}'
+            )
+        if cp.stderr:
+            raise EnvironmentError(
+                f'BAT stderr detected. Log: {log_path} | Command log: {cmd_log_path} | '
+                f'Return code: {cp.returncode} | Stderr: {stderr_summary}'
+            )
+        if not has_result_code and cp.returncode != 0:
+            raise EnvironmentError(
+                f'Error running `{bat_type}` bat (no Result Code). Log: {log_path} | '
+                f'Command log: {cmd_log_path} | Return code: {cp.returncode} | Stderr: {stderr_summary}'
+            )
+        if cp.returncode != 0:
+            raise EnvironmentError(
+                f'Error running `{bat_type}` bat. Log: {log_path} | Command log: {cmd_log_path} | '
+                f'Return code: {cp.returncode} | Stderr: {stderr_summary}'
+            )
         if 'End Session' in cp.stdout:
             return  # sucess
 
-    raise EnvironmentError(f'Error running `{bat_type}` bat: i = {i}')
+    raise EnvironmentError(
+        f'Error running `{bat_type}` bat: i = {i}. Log: {log_path} | Return code: {cp.returncode} | '
+        f'Command log: {cmd_log_path} | Stderr: {stderr_summary}'
+    )
 
 
 def change_sra_version():
